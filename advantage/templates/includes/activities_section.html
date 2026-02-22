@@ -35,7 +35,7 @@
                 <!-- Left Column: Call Type (Taken from the first record of the group) -->
                 
                 <div class="row_text content_title col-sm-2" style="display: flex;flex-direction: column;">
-                    <span>{{ first_row.call_type }}</span>
+                    <span>{{ _(first_row.call_type) }}</span>
                     <span style="height: 6px;"> </span>
                     <span style="font-weight: 400;">{{  frappe.utils.pretty_date(first_row.creation) }}</span>
                 </div>
@@ -47,7 +47,7 @@
                     {% for call in group_items %}
                         <div class="row_text">
                             <div class="col-sm-3">
-                                <span>{{ call.call_from_name }}</span>
+                                <span>{{ call.call_from_number }}</span>
                             </div>
                             <div class="col-sm-3">
                                 <span>{{ call.creation }}</span>

@@ -9,8 +9,8 @@
  "filters": [],
  "idx": 0,
  "is_standard": "Yes",
- "letterhead": null,
- "modified": "2026-01-07 11:48:01.186691",
+ "letter_head": null,
+ "modified": "2026-02-14 12:53:32.343621",
  "modified_by": "Administrator",
  "module": "Advantage",
  "name": "Lead Product",
@@ -34,6 +34,9 @@
   },
   {
    "role": "CRM Sales Manager"
+  },
+  {
+   "role": "CRM Call Center User"
   }
  ],
  "timeout": 0

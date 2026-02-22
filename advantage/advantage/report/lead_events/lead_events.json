@@ -9,8 +9,8 @@
  "filters": [],
  "idx": 0,
  "is_standard": "Yes",
- "letterhead": null,
- "modified": "2026-01-07 11:48:13.647161",
+ "letter_head": null,
+ "modified": "2026-02-14 12:53:20.489791",
  "modified_by": "Administrator",
  "module": "Advantage",
  "name": "Lead Events",
@@ -21,13 +21,16 @@
  "report_type": "Script Report",
  "roles": [
   {
-   "role": "Desk User"
-  },
-  {
    "role": "System Manager"
   },
   {
-   "role": "All"
+   "role": "CRM Sales Manager"
+  },
+  {
+   "role": "CRM Sales User"
+  },
+  {
+   "role": "CRM Call Center User"
   }
  ],
  "timeout": 0

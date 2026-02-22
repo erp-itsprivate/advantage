@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-02-16 17:05:12.035577",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "page_settings_section",
+  "num_of_events",
+  "num_of_issues",
+  "num_of_calls",
+  "column_break_moyr",
+  "num_of_products",
+  "num_of_notes",
+  "num_of_emails",
+  "settings_section",
+  "minutes_change_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "page_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Lead Page Settings"
+  },
+  {
+   "fieldname": "num_of_events",
+   "fieldtype": "Int",
+   "label": "Number of Events"
+  },
+  {
+   "fieldname": "column_break_moyr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "num_of_products",
+   "fieldtype": "Int",
+   "label": "Number of Products"
+  },
+  {
+   "fieldname": "num_of_issues",
+   "fieldtype": "Int",
+   "label": "Number of Issues"
+  },
+  {
+   "fieldname": "num_of_calls",
+   "fieldtype": "Int",
+   "label": "Number of Calls"
+  },
+  {
+   "fieldname": "num_of_notes",
+   "fieldtype": "Int",
+   "label": "Number of Notes"
+  },
+  {
+   "fieldname": "num_of_emails",
+   "fieldtype": "Int",
+   "label": "Number of Emails"
+  },
+  {
+   "fieldname": "settings_section",
+   "fieldtype": "Section Break",
+   "label": "Settings"
+  },
+  {
+   "fieldname": "minutes_change_note",
+   "fieldtype": "Int",
+   "label": "Minutes To Change Note"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-02-19 14:53:13.115814",
+ "modified_by": "Administrator",
+ "module": "Advantage",
+ "name": "Advantage Page Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

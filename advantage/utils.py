@@ -13,6 +13,8 @@ def update_cdrs_data(lead):
                 cdr=frappe.get_doc("PBX CDRs",a)
                 cdr.db_set('related_doctype_id',lead_doc.name,False,False,True)                   
 
+def get_sender_details():
+    return "John Doe", "johndoe@example.com"
 @frappe.whitelist()
 def get_sender_email(user=None):
     if not user:
@@ -23,27 +25,28 @@ def get_sender_email(user=None):
 
 def update_emails_data(lead):
     lead_doc=frappe.get_doc('Lead',lead)
-    values = {'email': '%'+lead_doc.email_id+'%', 'lead_name':lead_doc.name,'company':lead_doc.company}
-    
-    data=frappe.db.sql("""
-
-    select B.name from  `tabCommunication` B  
-    where (B.recipients like  %(email)s
-    or B.sender like  %(email)s )
-    and B.company =%(company)s 
-    and B.name not in ( select parent from  `tabCommunication Link`  TT where     TT.link_doctype='Lead'
-    and TT.link_name=%(lead_name)s )
-                """,values=values, as_dict=1)
-    for r in data :
-        communication=frappe.get_doc('Communication',r.name)
-        contact=communication.append("timeline_links", {})
-            
+    if (lead_doc.email_id is not None and lead_doc.email_id != "") :
+        values = {'email': '%'+lead_doc.email_id+'%', 'lead_name':lead_doc.name,'company':lead_doc.company}
         
-        contact.link_name=lead_doc.name
-        contact.link_doctype=lead_doc.doctype
+        data=frappe.db.sql("""
+
+        select B.name from  `tabCommunication` B  
+        where (B.recipients like  %(email)s
+        or B.sender like  %(email)s )
+        and B.company =%(company)s 
+        and B.name not in ( select parent from  `tabCommunication Link`  TT where     TT.link_doctype='Lead'
+        and TT.link_name=%(lead_name)s )
+                    """,values=values, as_dict=1)
+        for r in data :
+            communication=frappe.get_doc('Communication',r.name)
+            contact=communication.append("timeline_links", {})
+                
             
-        contact.save(ignore_permissions=True)
-    frappe.db.commit()
+            contact.link_name=lead_doc.name
+            contact.link_doctype=lead_doc.doctype
+                
+            contact.save(ignore_permissions=True)
+        frappe.db.commit()
 
 def get_permission_query_conditions(user):
     if not user:

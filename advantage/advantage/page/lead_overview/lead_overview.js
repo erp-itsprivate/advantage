@@ -50,15 +50,15 @@ frappe.pages['lead-overview'].on_page_load = function(wrapper) {
         {
             lead_summary.mobile_no_field.set_value(route[1]);
             lead_summary.mobile_no_field.df.read_only = 1;
-            lead_summary.lead_field.df.read_only = 1;
+           // lead_summary.lead_field.df.read_only = 1;
             lead_summary.mobile_no_field.refresh();
             lead_summary.lead_field.refresh();
          
-            lead_summary.has_unsaved_changes=true;
+            //lead_summary.has_unsaved_changes=true;
             lead_summary.setup_browser_guard();
             //lead_summary.mobile_no_field.set_disabled(true);
         }
-        else if ( route[1] != "NA" ) {
+        else if ( route[1] != "NA" && route[1] != "Unknown" ) {
         lead_summary.lead_field.set_value(route[1]);
         lead_summary.refresh_data(route[1],wrapper);
         }
@@ -226,7 +226,7 @@ LeadOverview = class {
                 { df:
                     { fieldname: 'phone_num',
                       label:__('Phone Number'),
-                      fieldtype: 'Int'
+                      fieldtype: 'Data'
                       
                     }, 
                     parent: $(this.wrapper).find("#phone_num"), 
@@ -237,7 +237,7 @@ LeadOverview = class {
                     { df:
                         { fieldname: 'whatsapp',
                           label:__('WhatsApp'),
-                          fieldtype: 'Int'
+                          fieldtype: 'Data'
                           
                         }, 
                         parent: $(this.wrapper).find("#whatsapp"), 
@@ -393,29 +393,38 @@ LeadOverview = class {
     }
     add_opportunities()
     {   
-         
-       
-        if (this.lead_field.get_value() != "" && this.lead_field.get_value() != undefined )
+         let me=this;
+         let party_name=null;
+         let type=null;
+      
+        if (me.lead_field.get_value() != "" && me.lead_field.get_value() != undefined )
         {
-            let party_name=this.lead_field.get_value();
-            let type="Lead";
-            if (this.customer != null)
+            party_name=me.lead_field.get_value();
+             type="Lead";
+            if (me.customer != null)
             {
                 type="Customer";
                 party_name=this.customer.name
             }
-        frappe.new_doc("Opportunity"); 
+        frappe.route_options = {}; 
+        frappe.new_doc("Opportunity",{
+            "opportunity_from":type,
+            
+        });
         frappe.ui.form.on("Opportunity", 
         { onload: function(frm) { 
            
-            frm.set_value("opportunity_from", type).then(() => {
+            console.log(party_name);
+           
                 frm.set_value("party_name", party_name).then(() => {
+                    
                     frm.set_df_property("party_name", "read_only", 1);
                     frm.refresh_field("party_name"); 
+                    console.log(frm.doc)
                 }); 
-            }); 
-            frm.set_df_property("opportunity_from", "read_only", 1);
-     
+           
+            //frm.set_df_property("opportunity_from", "read_only", 1);
+           // frm.refresh();
           
             
             
@@ -425,10 +434,16 @@ LeadOverview = class {
         });
         }
     }
-    save_data()
+      async save_data()
     {
         let me=this;
+        let lead_source;
         console.log('save');
+        if (frappe.defaults.get_default("lead_source") != undefined )
+        {
+            lead_source=frappe.defaults.get_default("lead_source");
+        }
+        console.log(lead_source);
         if ( this.has_unsaved_changes == true )
         {
             const mandatory_fields = [
@@ -457,40 +472,39 @@ LeadOverview = class {
         email : this.email_field.get_value(),
         industry : this.industry_field.get_value(),
         territory : this.territory_field.get_value(),
-        birth_date :this.birth_date_field.get_value()
+        birth_date :this.birth_date_field.get_value(),
+        source : lead_source
         };
          
        
-        frappe.call({
+         frappe.call({
             method: 'advantage.advantage.page.lead_overview.lead_overview.save_lead',
             args: {
                 'lead': lead
             },
+            async :false,
             callback: function(r) {
-                if (r.message) {
-                    console.log(r.message); 
-                   
-                    if (r.message != undefined )
-                    {
-                        me.lead_field.set_value(r.message );
-                    }
-                }
+                if (r && r.message) 
+                {
+                me.has_unsaved_changes = false;
+                me.page.set_indicator('', '');
+                frappe.show_alert({message: __('Saved Successfully'), indicator: 'green'});
+                me.empty_fields(me.wrapper);
+                
+                me.lead_field.set_value(r.message);
+                me.lead_field.refresh();
+                } 
             }
         });
-       
         
        
         
         // 3. Visual Feedback
-        this.has_unsaved_changes = false;
-        this.page.set_indicator('', '');
-        frappe.show_alert({message: 'Saved Successfully', indicator: 'green'});
-        this.empty_fields(this.wrapper);
-        this.lead_field.set_value(null);
+       
      }
      else 
      {
-        frappe.show_alert({message: 'No Changes Found', indicator: 'orange'});
+        frappe.show_alert({message: __('No Changes Found'), indicator: 'orange'});
      }
     }
     setup_shortcuts() {
@@ -527,7 +541,7 @@ LeadOverview = class {
                 callback: function(r) {
                     if (r.message) {
                         // Render template with new data
-                        console.log(r.message[9]) ;
+                      
                       
                         me.is_programmatic_update=true;
                        
@@ -557,7 +571,7 @@ LeadOverview = class {
                         $(wrapper).find("#full_name").val(r.message[4].lead_name);
                         me.mobile_no_field.set_value(r.message[4].mobile_no);
                         me.customer=r.message[7];
-                        console.log(me.customer);
+                     
                         me.whatsapp_field.set_value(r.message[4].whatsapp_no);
                         
                      
@@ -598,7 +612,7 @@ LeadOverview = class {
                             $(wrapper).find("#status").addClass('green');
                         }
                          
-                        $(wrapper).find("#lead_owner").text(r.message[4].owner);
+                        $(wrapper).find("#lead_owner").text(r.message[4].lead_owner);
                         setTimeout(() => {
                             me.is_programmatic_update = false; // Unlock
                              
@@ -647,7 +661,7 @@ LeadOverview = class {
                     },
                     callback: function(r) {
                         if (r.message) {
-                            console.log(r.message); 
+                            
                           // $(wrapper).find("#product").empty();
                           $(wrapper).find("#events").html(r.message);
                             
@@ -735,7 +749,7 @@ LeadOverview = class {
                                         },
                                         callback: function(r) {
                                             if (r.message) {
-                                                console.log(r.message); 
+                                              
                                               // $(wrapper).find("#product").empty();
                                               $(wrapper).find("#product").html(r.message);
                                                 
@@ -774,12 +788,13 @@ LeadOverview = class {
 					},
 				],
                 primary_action(values) {
-                    console.log(values);
+                    
                     values.doctype="CRM Note"                 
                     values.parentfield="notes";
                     values.parent=me.lead_field.get_value();
                     values.parenttype="Lead";
                     values.added_on= frappe.datetime.now_datetime();
+                    values.added_by=frappe.session.user;
                     frappe.call({
                         method: "frappe.client.insert",
                         args: { doc: values },                    
@@ -795,7 +810,7 @@ LeadOverview = class {
                                     },
                                     callback: function(r) {
                                         if (r.message) {
-                                            console.log(r.message); 
+                                            
                                           // $(wrapper).find("#product").empty();
                                           $(wrapper).find("#notes").html(r.message);
                                             
@@ -865,7 +880,7 @@ LeadOverview = class {
             ],
             primary_action_label: __("Confirm"),
             primary_action(values) {
-                console.log(values);
+                
                 values.doctype="Issue"
                 frappe.call({
                     method: "frappe.client.insert",
@@ -882,7 +897,7 @@ LeadOverview = class {
                                 },
                                 callback: function(r) {
                                     if (r.message) {
-                                        console.log(r.message); 
+                                        
                                       // $(wrapper).find("#product").empty();
                                       $(wrapper).find("#issues").html(r.message);
                                         
@@ -1032,6 +1047,7 @@ LeadOverview = class {
                     {
                         me.is_cleared=false;
                         me.lead_field.set_value(null);
+                        me.last_lead_value=null;
                         return;
                     }
                 // 2. THE FIX: Compare current value with the last processed value

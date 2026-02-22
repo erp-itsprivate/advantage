@@ -20,6 +20,7 @@ app_license = "mit"
 # 		"has_permission": "advantage.api.permission.has_app_permission"
 # 	}
 # ]
+get_sender_details = "advantage.utils.get_sender_details"
 fixtures = [  {"dt": "Custom Field", "filters": [["Module", "in", ["Advantage"]]]}, {"dt": "Property Setter"} ]
 # Includes in <head>
 # ------------------
@@ -78,7 +79,7 @@ has_permission = {
 override_doctype_class = {
 	#"Contact": "advantage.override.contact.AdvantageContact",
     	"Lead": "advantage.override.lead.AdvantageLead",
-    "Customer":"advantage.override.customer.AdvantageCustomer"
+    "Customer":"advantage.override.customer.AdvantageCustomer"    
 }
 # Generators
 # ----------

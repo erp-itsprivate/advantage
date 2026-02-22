@@ -26,6 +26,7 @@ def get_context(context):
 @frappe.whitelist()
 def get_lead_info(lead):
     try:
+        
         events = render_event(lead)
         products = render_products(lead)
         issues = render_issues(lead)
@@ -37,7 +38,9 @@ def get_lead_info(lead):
         activities_section=None
         if activites is not None:
             activities_section=str(frappe.render_template("templates/includes/activities_section.html",{"template_data":{"lead":lead,"num_of_data":len(activites),"calls":activites}}))
-        lead=frappe.get_doc('Lead',lead)
+        lead=frappe.get_doc('Lead',lead).as_dict()
+        if (frappe.db.exists('User',lead.get("lead_owner"))):
+            lead.update({"lead_owner":frappe.get_doc("User",lead.get("lead_owner")).username})
         customer=None
         if (frappe.db.exists('Customer',{"lead_name":lead.name})):
             customer=frappe.get_doc('Customer',{"lead_name":lead.name})
@@ -72,8 +75,11 @@ def render_products(lead):
     # lead_doc.save()
     # frappe.db.commit()
     try:
-        data=get_products(lead,[],4)
-        return  str(frappe.render_template("templates/includes/product_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))
+        limit=frappe.get_single('Advantage Page Settings').num_of_products or 0
+        if limit > 0:
+            data=get_products(lead,[],limit)
+            if data is not None :
+                return  str(frappe.render_template("templates/includes/product_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))
     except Exception as e :
             logger_exception.error(f" file => advantage page.py render_products lead {lead}  {frappe.get_traceback()} ")
             frappe.log_error(message= f" file => advantage page.py render_products lead {lead}  {frappe.get_traceback()} ", title="Advantage Page")  
@@ -83,8 +89,11 @@ def render_products(lead):
 @frappe.whitelist()
 def render_issues(lead):
     try:
-        data=get_issues(lead,['name','creation','description','status'],3)
-        return  str(frappe.render_template("templates/includes/issue_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))
+        limit=frappe.get_single('Advantage Page Settings').num_of_issues or 0
+        if limit > 0:
+            data=get_issues(lead,['name','creation','description','status'],limit)
+            if data is not None   :
+                return  str(frappe.render_template("templates/includes/issue_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))
     except Exception as e :
             logger_exception.error(f" file => advantage page.py render_issues lead {lead}  {frappe.get_traceback()} ")
             frappe.log_error(message= f" file => advantage page.py render_issues lead {lead}  {frappe.get_traceback()} ", title="Advantage Page")  
@@ -93,8 +102,11 @@ def render_issues(lead):
 @frappe.whitelist()
 def render_notes(lead):
     try:
-        data=get_notes(lead,['owner','note','parent','added_on','parenttype'],3)
-        return   str(frappe.render_template("templates/includes/note_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))  
+        limit=frappe.get_single('Advantage Page Settings').num_of_notes or 0
+        if limit > 0:
+            data=get_notes(lead,['owner','note','parent','added_on','parenttype'],limit)
+            if data is not None   :
+                return   str(frappe.render_template("templates/includes/note_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))  
     except Exception as e :
             logger_exception.error(f" file => advantage page.py render_notes lead {lead}  {frappe.get_traceback()} ")
             frappe.log_error(message= f" file => advantage page.py render_notes lead {lead}  {frappe.get_traceback()} ", title="Advantage Page")  
@@ -103,8 +115,11 @@ def render_notes(lead):
 @frappe.whitelist()
 def render_event(lead):
     try: 
-        data=get_events(lead,['subject','status','name','creation'],4)
-        return  str(frappe.render_template("templates/includes/event_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))
+        limit=frappe.get_single('Advantage Page Settings').num_of_events or 0
+        if limit > 0:
+            data=get_events(lead,['subject','status','name','creation'],limit)
+            if data is not None   :
+                return  str(frappe.render_template("templates/includes/event_section.html", {'template_data':{"lead":lead,"data":data,"num_of_data":len(data)}}))
     except Exception as e :
             logger_exception.error(f" file => advantage page.py render_event lead {lead}  {frappe.get_traceback()} ")
             frappe.log_error(message= f" file => advantage page.py render_event lead {lead}  {frappe.get_traceback()} ", title="Advantage Page")  
@@ -112,6 +127,7 @@ def render_event(lead):
 
 def get_events(lead,fields,limit):
     try:
+        
         connections=get_detailed_connections(lead)
         event_participants=[]
         event_participants.append(frappe.get_all('Event Participants', filters=[["reference_doctype",'=','Lead'],['reference_docname','=',lead]],fields=['parent']))
@@ -119,9 +135,9 @@ def get_events(lead,fields,limit):
             event_participants.append(frappe.get_all('Event Participants', filters=[["reference_doctype",'=','Prospect'],['reference_docname','in',connections.get('prospects')]],fields=['parent']))
         if len(connections.get('opportunities')) > 0 :
             event_participants.append(frappe.get_all('Event Participants', filters=[["reference_doctype",'=','Opportunity'],['reference_docname','in',connections.get('opportunities')]],fields=['parent']))
-        event_names = [item['parent'] for sublist in event_participants for item in sublist]
+        event_names =  [d.get('parent') for sublist in event_participants for d in sublist]
         #frappe.get_all('ToDo', filters=[["reference_type",'=','Event'],['reference_name','in',event_names]],fields=['allocated_to,reference_name'])
-        events= frappe.get_list('Event',filters=[['name','in',event_names]],fields=fields,limit=limit)
+        events= frappe.get_all('Event',filters=[['name','in',event_names]],fields=fields,limit=limit)
         event_owner=frappe.get_all('ToDo', filters=[["reference_type",'=','Event'],['reference_name','in',event_names]],fields=['allocated_to','reference_name'])
         
         alloc_map = {} 
@@ -205,7 +221,7 @@ def get_products(lead,fields,limit):
                 data=frappe.get_all('Customer Items', filters= [['name','in',pre_data]],fields=all_fields)
                 for item in data: 
                     item['subject'] = 'Sold'
-                    item['item'] =item.pop('item')
+                    item['item'] =frappe.get_doc("Item",item.pop('item')).item_name
                     item['creation'] =item.pop('sell_date')
                     item['link']="customer/"+item.pop('parent')
                 products.append(data)  
@@ -283,10 +299,15 @@ def save_lead(lead):
             "email_id": data.get("email"),
             "industry":data.get("industry"),
             "territory":data.get("territory"),
-            "custom_birth_date":data.get("birth_date")
+            "custom_birth_date":data.get("birth_date"),
+            
+
 
             }
+            if data.get("source") is not None and data.get("source") != "":
+                updates.update({"source": data.get("source")})
             frappe.db.set_value("Lead", data.get("lead_id"), updates)
+            return data.get("lead_id")
         else:
             doc = frappe.get_doc({
                 "doctype": "Lead",
@@ -303,9 +324,10 @@ def save_lead(lead):
             "email_id": data.get("email"),
             "industry":data.get("industry"),
             "territory":data.get("territory"),
-            "company_name": data.get("organization"),
+            "company_name": data.get("organization")
             })
-
+            if data.get("source") is not None and data.get("source") != "":
+                updates.update({"source": data.get("source")})
             doc.insert()
             frappe.db.commit()
             return doc.name
@@ -319,30 +341,32 @@ def save_lead(lead):
 def get_emails(lead,limit):
     try:
         import datetime
+        emails=[]
         lead_doc=frappe.get_doc('Lead',lead)
-        values = {'email': '%'+lead_doc.email_id+'%', 'lead_name':lead_doc.name,'company':lead_doc.company,'limit':limit}
-        emails=frappe.db.sql("""
+        if lead_doc.email_id is not None and lead_doc.email_id != "":
+            values = {'email': '%'+lead_doc.email_id+'%', 'lead_name':lead_doc.name,'company':lead_doc.company,'limit':limit}
+            emails=frappe.db.sql("""
 
-        select B.sent_or_received,B.sender,B.creation,B.recipients,B.uid,B.subject,B.name from  `tabCommunication` B  
-        where B.communication_medium='Email' and  (B.recipients like  %(email)s
-        or B.sender like  %(email)s )
-        and B.company =%(company)s
-        order by creation desc
-        limit %(limit)s """,values=values, as_dict=1)
-        #emails= frappe.get_all("Communication", filters=[["communication_medium","=","Email"]],or_filters=['recipients','=',email],fields=['sent_or_received','sender','creation','recipients','uid','subject','name'],order_by='creation desc',limit=4)
-        for email in emails:
-            # 1. Change 'sent_or_received' -> 'disposition'
-            # .pop() gets the value of the old key and deletes the old key from the dict
-            email['call_type'] = email.pop('sent_or_received')
+            select B.sent_or_received,B.sender,B.creation,B.recipients,B.uid,B.subject,B.name from  `tabCommunication` B  
+            where B.communication_medium='Email' and  (B.recipients like  %(email)s
+            or B.sender like  %(email)s )
+            and B.company =%(company)s
+            order by creation desc
+            limit %(limit)s """,values=values, as_dict=1)
+            #emails= frappe.get_all("Communication", filters=[["communication_medium","=","Email"]],or_filters=['recipients','=',email],fields=['sent_or_received','sender','creation','recipients','uid','subject','name'],order_by='creation desc',limit=4)
+            for email in emails:
+                # 1. Change 'sent_or_received' -> 'disposition'
+                # .pop() gets the value of the old key and deletes the old key from the dict
+                email['call_type'] = email.pop('sent_or_received')
+                
+                # 2. Change 'sender' -> 'call_from'
+                email['call_from_name'] = email.pop('sender')
+                email['call_to_name'] = email.pop('recipients')
+                email['call_id'] = str(email.pop('uid'))
+                email['creation'] = email['creation'].replace(microsecond=0)
+                email['disposition'] = str(email.pop('subject'))
+                email['link']="/app/communication/"+email.pop('name')  
             
-            # 2. Change 'sender' -> 'call_from'
-            email['call_from_name'] = email.pop('sender')
-            email['call_to_name'] = email.pop('recipients')
-            email['call_id'] = str(email.pop('uid'))
-            email['creation'] = email['creation'].replace(microsecond=0)
-            email['disposition'] = str(email.pop('subject'))
-            email['link']="/app/communication/"+email.pop('name')  
-        
         return emails
     except Exception as e :
         logger_exception.error(f" file => advantage page.py get_emails lead {lead}  {frappe.get_traceback()} ")
@@ -354,16 +378,24 @@ def combine_email_with_cdr(lead):
         lead_doc=frappe.get_doc('Lead',lead)
         aa=[]
         calls=[]
-        if lead_doc.mobile_no is not None and lead_doc.mobile_no != '':
-            calls.extend(get_phone_cdrs_by_cdrid(lead_doc.mobile_no,3))
-        if lead_doc.phone is not None and lead_doc.phone != '':
-            calls.extend(get_phone_cdrs_by_cdrid(lead_doc.phone,3))
+        limit=frappe.get_single('Advantage Page Settings').num_of_calls or 0
+        if limit > 0:
+            if lead_doc.mobile_no is not None and lead_doc.mobile_no != '':
+                calls.extend(get_phone_cdrs_by_cdrid(lead_doc.mobile_no,limit))
+            if lead_doc.phone is not None and lead_doc.phone != '':
+                calls.extend(get_phone_cdrs_by_cdrid(lead_doc.phone,limit))
 
-            
-
-        emails=get_emails(lead,3)
+            for call in calls:
+                    # 1. Change 'sent_or_received' -> 'disposition'
+                    # .pop() gets the value of the old key and deletes the old key from the dict
+                    if len(call['call_from_number'])==3:
+                        call['call_from_number'] = call.pop('call_from_name')
+                    
+        limit=frappe.get_single('Advantage Page Settings').num_of_emails or 0
+        if limit > 0:
+            emails=get_emails(lead,limit)
         
-        combined_timeline = emails + calls
+            combined_timeline = emails + calls
 
         # 4. Sort by 'creation' (Reverse=True means Newest First)
         aa = sorted(combined_timeline, key=lambda x: x['creation'], reverse=True)

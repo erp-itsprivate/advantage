@@ -101,11 +101,15 @@ def get_data(filters):
 		lead=conditions.get('lead')
 		if lead is not None and lead != "" :
 			lead_doc=frappe.get_doc('Lead',lead)
-			values = {'email': '%'+lead_doc.email_id+'%', 'lead_name':lead_doc.name,'company':lead_doc.company}
+			values = {'email': '',  'lead_name':lead_doc.name,'company':lead_doc.company}
+			if lead_doc.email_id is not None and lead_doc.email_id != "":
+				values.update({'email': '%'+lead_doc.email_id+'%'})
+			 
 			if lead_doc.mobile_no is not None and lead_doc.mobile_no != '':
 				values.update({'mobile_no': lead_doc.mobile_no})
-			if lead_doc.phone is not None and lead_doc.phone != '':
-				values.update({'phone': lead_doc.phone})
+			phone=lead_doc.phone or lead_doc.mobile_no
+			 
+			values.update({'phone': phone})
 				#STR_TO_DATE(cdr_time, "%d/%m/%Y %H:%M:%S")
 			result=frappe.db.sql("""
 

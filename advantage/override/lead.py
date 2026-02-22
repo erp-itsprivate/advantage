@@ -1,6 +1,6 @@
 
 import frappe
-
+from frappe import _
 from erpnext.crm.doctype.lead.lead import Lead
 from advantage.utils import get_detailed_connections,normalize_syria_number,update_cdrs_data,update_emails_data
 logger_exception = frappe.logger("advantage.error", allow_site=True, file_count=50)
@@ -8,11 +8,39 @@ logger_exception.setLevel(20)
 
 
 class AdvantageLead(Lead):
+    def before_save(self):
+        self.first_name=self.first_name.strip()
+        self.last_name=self.last_name.strip()
+        super().set_full_name()
+        self.title=self.lead_name
+        
     def on_update(self):
     #    for link in frappe.get_all('Dynamic Link', filters=[['link_doctype','=','Lead'],['link_name','=',self.name]],pluck='parent'):
     #         for contact in frappe.get_all('Contact Phone', filters=[['parent','=',link],["phone","=",self.mobile_no]],fields=['*']):
     #             contact_phone=frappe.get_doc('Contact Phone',{'parent':link,'phone':self.mobile_no})
     #             contact_phone.db_set('is_primary_mobile_no',True,False,False,True)
+        if (self.company is not None and self.company != ""):
+            phone_ext=self.phone_ext or  self.mobile_no
+            phone=self.phone or self.mobile_no
+            whatsapp_no=self.whatsapp_no or self.mobile_no
+            mobile_no=self.mobile_no  
+            custom_additional_mobile=self.custom_additional_mobile or self.mobile_no
+            custom_additional_phone=self.custom_additional_phone or self.mobile_no
+
+            values = {'name':self.name,'phone_ext': phone_ext, 'phone':phone,'company':self.company,'whatsapp_no':whatsapp_no,'mobile_no':mobile_no,'custom_additional_mobile':custom_additional_mobile,'custom_additional_phone':custom_additional_phone}
+            data=frappe.db.sql("""
+                            Select name from `tabLead` where company = %(company)s and name != %(name)s
+                            and ( phone_ext in (%(phone_ext)s ,%(phone)s,%(whatsapp_no)s,%(mobile_no)s,%(custom_additional_mobile)s,%(custom_additional_phone)s ) 
+                            or phone in (%(phone_ext)s ,%(phone)s,%(whatsapp_no)s,%(mobile_no)s,%(custom_additional_mobile)s,%(custom_additional_phone)s ) 
+                            or whatsapp_no in (%(phone_ext)s ,%(phone)s,%(whatsapp_no)s,%(mobile_no)s,%(custom_additional_mobile)s,%(custom_additional_phone)s )
+                            or mobile_no in (%(phone_ext)s ,%(phone)s,%(whatsapp_no)s,%(mobile_no)s,%(custom_additional_mobile)s,%(custom_additional_phone)s )
+                            or custom_additional_mobile in (%(phone_ext)s ,%(phone)s,%(whatsapp_no)s,%(mobile_no)s,%(custom_additional_mobile)s,%(custom_additional_phone)s )
+                            or custom_additional_phone in (%(phone_ext)s ,%(phone)s,%(whatsapp_no)s,%(mobile_no)s,%(custom_additional_mobile)s,%(custom_additional_phone)s )
+                            )
+                            """,values=values, as_dict=1)
+            if len(data) >0 :
+                frappe.throw(_("Another Lead {0} with same mobile number").format(data[0].name ))
+                 
         try:
             self.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)
             self.db_set('phone',normalize_syria_number(self.phone),False,False,True)
@@ -20,7 +48,13 @@ class AdvantageLead(Lead):
             self.db_set('mobile_no',normalize_syria_number(self.mobile_no),False,False,True)
             self.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)
             self.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_phone),False,False,True)
-            
+            # self.db_set('first_name',  self.first_name.strip(),False,False,True)
+            # self.db_set('last_name',  self.last_name.strip(),False,False,True) 
+            # self.db_set('title',  self.lead_name,False,False,True) 
+            # lead_name = " ".join(
+			# 	filter(None, [ (self.salutation or "").strip(), (self.first_name or "").strip(), (self.middle_name or "").strip(), (self.last_name or "").strip()])
+			# )
+            # self.db_set('lead_name',  lead_name,False,False,True) 
             connections=get_detailed_connections(self.name)
             if len(connections.get('opportunities')) > 0 :
                 for oppor in connections.get('opportunities'):
