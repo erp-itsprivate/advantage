@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 1,
- "modified": "2026-02-20 18:28:47.825708",
+ "modified": "2026-03-04 10:28:33.515982",
  "modified_by": "Administrator",
  "module": "Advantage",
  "name": "lead-overview",
@@ -19,6 +19,9 @@
   },
   {
    "role": "CRM Call Center User"
+  },
+  {
+   "role": "CRM Call Center User test"
   }
  ],
  "script": null,

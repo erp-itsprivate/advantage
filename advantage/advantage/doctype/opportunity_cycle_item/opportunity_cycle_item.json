@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-02-27 23:58:43.233133",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "state",
+  "user",
+  "action_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "State",
+   "options": "New\nAssigned\nContacted\nFollow Up (1st)\nFollow Up (2nd)\nFollow Up (3rd)\nFollow Up (4th)\nEngaged\nLost\nConverted\nHanded Over\nClosed",
+   "translatable": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "action_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Action Date"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-28 07:14:42.119930",
+ "modified_by": "Administrator",
+ "module": "Advantage",
+ "name": "Opportunity Cycle Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

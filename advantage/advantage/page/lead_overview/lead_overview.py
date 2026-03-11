@@ -50,20 +50,57 @@ def get_lead_info(lead):
             frappe.log_error(message= f" file => advantage page.py get_lead_info lead {lead}  {frappe.get_traceback()} ", title="Advantage Page")  
 
 
-
+@frappe.whitelist()
+def make_opportunity(source_name, target_doc=None):
+    from erpnext.crm.doctype.lead.lead import _set_missing_values
+    from frappe.model.mapper import get_mapped_doc
+    def set_missing_values(source, target):
+        _set_missing_values(source, target)
+    target_doc = get_mapped_doc(
+		"Lead",
+		source_name,
+		{
+			"Lead": {
+				"doctype": "Opportunity",
+				"field_map": {
+					"doctype": "opportunity_from",
+					"name": "party_name",
+					"lead_name": "contact_display",
+					"company_name": "customer_name",
+					"email_id": "contact_email",
+					"mobile_no": "contact_mobile",
+					"lead_owner": "opportunity_owner",
+					"notes": "notes",
+				},
+			}
+		},
+		target_doc,
+		set_missing_values,
+	    )
+    connections=get_detailed_connections(source_name)
+    if len(connections.get('customer')) > 0 :
+        customer=frappe.get_doc('Customer',connections.get('customer')[0])
+        target_doc.update({"opportunity_from":"Customer","contact_display":customer.customer_name})
+    return target_doc
 
 def get_critical_notes(lead):
     try:
-        critical_notes=frappe.get_all('Critical Lead Notes',fields=['name'],order_by='creation desc',filters=[['lead','=', lead],['disable','=','0'],['creation','>=',frappe.utils.get_datetime()]],limit=1,pluck='name')
-        if (len(critical_notes) > 0):
-            return frappe.get_list('Critical Lead Notes',filters=[['name','in',critical_notes]],fields=['note'])[0]
+        if frappe.has_permission('Critical Lead Notes', "read"):
+            critical_notes=frappe.get_all('Critical Lead Notes',fields=['name'],order_by='creation desc',filters=[['lead','=', lead],['disable','=','0'],['creation','>=',frappe.utils.get_datetime()]],limit=1,pluck='name')
+            if (critical_notes is not None and len(critical_notes) > 0):
+                return frappe.get_all('Critical Lead Notes',filters=[['name','in',critical_notes]],fields=['note'])[0]
+            else:
+                return []
+        else:
+            return []
     except Exception as e :
             logger_exception.error(f" file => advantage page.py get_critical_notes lead {lead}  {frappe.get_traceback()} ")
             frappe.log_error(message= f" file => advantage page.py get_critical_notes lead {lead}  {frappe.get_traceback()} ", title="Advantage Page")  
 
 
 def get_opportunities(lead,limit):
-    return frappe.get_all('Opportunity', filters=[['party_name','=',lead]],fields=['creation','probability','opportunity_type','name','status','owner'],order_by='creation DESC',limit=limit)
+    if frappe.has_permission('Opportunity', "read"):
+        return frappe.get_all('Opportunity', filters=[['party_name','=',lead]],fields=['creation','probability','opportunity_type','name','status','owner'],order_by='creation DESC',limit=limit)
 
 @frappe.whitelist()
 def render_products(lead):
@@ -161,7 +198,10 @@ def get_maintenance(lead,limit):
         connections=get_detailed_connections(lead)
         maintenances=[]
         if len(connections.get('customer')) > 0 :
-                pre_data=frappe.get_list('Maintenance Visit', filters=[['customer','in',connections.get('customer')]],pluck='name',limit=limit)
+                if frappe.has_permission("Maintenance Visit", "read"):
+                    pre_data=frappe.get_list('Maintenance Visit', filters=[['customer','in',connections.get('customer')]],pluck='name',limit=limit)
+                else:
+                    pre_data=[]
                 all_fields=['name','maintenance_type','completion_status','mntc_date','creation']
 
                 data=frappe.get_all('Maintenance Visit', filters=[['name','in',pre_data]],fields=all_fields)
@@ -239,9 +279,11 @@ def get_issues(lead,fields,limit):
     try:
         connections=get_detailed_connections(lead)
         products=[]
-        products.append(frappe.get_list('Issue', filters=[['lead','=',lead]],fields=fields,limit=limit))
+        if frappe.has_permission("Issue", "read"):
+            products.append(frappe.get_list('Issue', filters=[['lead','=',lead]],fields=fields,limit=limit))
         if len(connections.get('customer')) > 0 :
-            products.append(frappe.get_list('Issue', filters=[['customer','in',connections.get('customer')]],fields=fields,limit=limit))
+            if frappe.has_permission("Issue", "read"):
+                products.append(frappe.get_list('Issue', filters=[['customer','in',connections.get('customer')]],fields=fields,limit=limit))
         flat_list = [obj for sublist in products for obj in sublist]
         ordered = sorted(flat_list, key=lambda x: x['creation'],reverse=True)
         for item in ordered:            
@@ -258,9 +300,9 @@ def get_notes(lead,fields,limit):
         notes=[]
         pre_data=frappe.get_all('CRM Note', filters=[['parent','=',lead],["parenttype","=","Lead"]],pluck='name',limit=limit)     
         notes.append(frappe.get_all('CRM Note', filters=[['name','in',pre_data]],fields=fields))
-        if len(connections.get('opportunities')) > 0 :
-            pre_data=frappe.get_all('CRM Note', filters=[['parent','in',connections.get('opportunities')],["parenttype","=","Opportunity"]],pluck='name',limit=limit)   
-            notes.append(frappe.get_all('CRM Note', filters=[['name','in',pre_data]],fields=fields))
+        #if len(connections.get('opportunities')) > 0 :
+        #    pre_data=frappe.get_all('CRM Note', filters=[['parent','in',connections.get('opportunities')],["parenttype","=","Opportunity"]],pluck='name',limit=limit)   
+        #   notes.append(frappe.get_all('CRM Note', filters=[['name','in',pre_data]],fields=fields))
         flat_list = [obj for sublist in notes for obj in sublist]
         ordered = sorted(flat_list, key=lambda x: x['added_on'],reverse=True)
         for item in ordered:            
@@ -309,25 +351,45 @@ def save_lead(lead):
             frappe.db.set_value("Lead", data.get("lead_id"), updates)
             return data.get("lead_id")
         else:
-            doc = frappe.get_doc({
-                "doctype": "Lead",
-            "gender": data.get("gender"),
-            "first_name": data.get("first_name"),
-            "last_name":data.get("last_name"),
-            "custom_birth_date":data.get("birth_date"),
-            "mobile_no" : data.get("mobile_no"),
-                "company":data.get("company") ,
-                "market_segment" : data.get("market_segment")  ,
-                "job_title":data.get("job_title"),
-                "whatsapp_no" : data.get("whatsapp"),
-            "phone": data.get("phone_no"),
-            "email_id": data.get("email"),
-            "industry":data.get("industry"),
-            "territory":data.get("territory"),
-            "company_name": data.get("organization")
-            })
             if data.get("source") is not None and data.get("source") != "":
-                updates.update({"source": data.get("source")})
+                doc = frappe.get_doc({
+                    "doctype": "Lead",
+                "gender": data.get("gender"),
+                "first_name": data.get("first_name"),
+                "last_name":data.get("last_name"),
+                "custom_birth_date":data.get("birth_date"),
+                "mobile_no" : data.get("mobile_no"),
+                    "company":data.get("company") ,
+                    "market_segment" : data.get("market_segment")  ,
+                    "job_title":data.get("job_title"),
+                    "whatsapp_no" : data.get("whatsapp"),
+                "phone": data.get("phone_no"),
+                "email_id": data.get("email"),
+                "industry":data.get("industry"),
+                "territory":data.get("territory"),
+                "company_name": data.get("organization"),
+                "source": data.get("source")
+                })
+            
+            else: 
+                doc = frappe.get_doc({
+                    "doctype": "Lead",
+                "gender": data.get("gender"),
+                "first_name": data.get("first_name"),
+                "last_name":data.get("last_name"),
+                "custom_birth_date":data.get("birth_date"),
+                "mobile_no" : data.get("mobile_no"),
+                    "company":data.get("company") ,
+                    "market_segment" : data.get("market_segment")  ,
+                    "job_title":data.get("job_title"),
+                    "whatsapp_no" : data.get("whatsapp"),
+                "phone": data.get("phone_no"),
+                "email_id": data.get("email"),
+                "industry":data.get("industry"),
+                "territory":data.get("territory"),
+                "company_name": data.get("organization")
+                
+                })   
             doc.insert()
             frappe.db.commit()
             return doc.name

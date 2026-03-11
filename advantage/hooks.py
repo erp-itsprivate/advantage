@@ -20,11 +20,16 @@ app_license = "mit"
 # 		"has_permission": "advantage.api.permission.has_app_permission"
 # 	}
 # ]
-get_sender_details = "advantage.utils.get_sender_details"
+
 fixtures = [  {"dt": "Custom Field", "filters": [["Module", "in", ["Advantage"]]]}, {"dt": "Property Setter"} ]
 # Includes in <head>
 # ------------------
-
+doc_events = {
+    "Email Queue": {
+        "before_insert": "advantage.utils.email_queue"
+    },
+    
+}
 # include js, css files in header of desk.html
 # app_include_css = "/assets/advantage/css/advantage.css"
 # app_include_js = "/assets/advantage/js/advantage.js"
@@ -45,7 +50,7 @@ fixtures = [  {"dt": "Custom Field", "filters": [["Module", "in", ["Advantage"]]
 app_include_js = [
 	"/assets/advantage/js/utils.bundle.js",
 	"/assets/advantage/js/lib/datepicker.ar.js",
-    "/assets/advantage/js/communication_override.js"
+    "/assets/advantage/js/filter_users_events.js"
 ]
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}

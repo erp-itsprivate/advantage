@@ -401,37 +401,42 @@ LeadOverview = class {
         {
             party_name=me.lead_field.get_value();
              type="Lead";
-            if (me.customer != null)
-            {
-                type="Customer";
-                party_name=this.customer.name
-            }
-        frappe.route_options = {}; 
-        frappe.new_doc("Opportunity",{
-            "opportunity_from":type,
+            //if (me.customer != null)
+            //{
+             //   type="Customer";
+              //  party_name=this.customer.name
+           //    }
+            let frm = { doc: { name: party_name },get_selected: function() { return{}; } };
             
-        });
-        frappe.ui.form.on("Opportunity", 
-        { onload: function(frm) { 
+            frappe.model.open_mapped_doc({
+                                method: "advantage.advantage.page.lead_overview.lead_overview.make_opportunity",
+                                frm: frm,
+                            });
+        // frappe.route_options = {}; 
+        // frappe.new_doc("Opportunity",{
+        //     "opportunity_from":type,
+            
+        // });
+        // frappe.ui.form.on("Opportunity", { onload: function(frm) { 
            
-            console.log(party_name);
+        //     console.log(party_name);
            
-                frm.set_value("party_name", party_name).then(() => {
+        //         frm.set_value("party_name", party_name).then(() => {
                     
-                    frm.set_df_property("party_name", "read_only", 1);
-                    frm.refresh_field("party_name"); 
-                    console.log(frm.doc)
-                }); 
+        //             frm.set_df_property("party_name", "read_only", 1);
+        //             frm.refresh_field("party_name"); 
+        //             console.log(frm.doc)
+        //         }); 
            
-            //frm.set_df_property("opportunity_from", "read_only", 1);
-           // frm.refresh();
+        //     //frm.set_df_property("opportunity_from", "read_only", 1);
+        //    // frm.refresh();
           
             
             
            
-        }
+        // }
          
-        });
+        // });
         }
     }
       async save_data()

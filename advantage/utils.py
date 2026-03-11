@@ -13,8 +13,132 @@ def update_cdrs_data(lead):
                 cdr=frappe.get_doc("PBX CDRs",a)
                 cdr.db_set('related_doctype_id',lead_doc.name,False,False,True)                   
 
-def get_sender_details():
-    return "John Doe", "johndoe@example.com"
+
+def todo_event_additional_data(doc):
+    if doc.doctype=="ToDo":
+        if doc.reference_type == 'Opportunity' and doc.reference_name:
+            opp = frappe.get_doc('Opportunity',doc.reference_name)
+            if opp:
+                doc.custom_opportunity_domain = opp.opportunity_type
+        user = doc.allocated_to
+    else:
+        if len(doc.event_participants) > 0 :
+            for row in doc.event_participants:
+                if row.reference_doctype == 'Opportunity' and row.reference_docname:
+                    opp = frappe.get_doc('Opportunity',doc.reference_docname)
+                    if opp:
+                        doc.custom_opportunity_domain = opp.opportunity_type
+        
+        for todo in frappe.get_all('ToDo', filters=[["reference_type",'=','Event'],['reference_name','in',doc.name]]):
+            todo_doc=frappe.get_doc('ToDo',todo.name)
+            todo_doc.date=doc.starts_on.date()
+            user=todo_doc.allocated_to
+            todo_doc.save()          
+    
+    company = frappe.defaults.get_user_default("Company")
+    
+    #company = 'KIA'
+    #user = 'obay.t@kia-sy.com'
+    if company and user:
+        domains = frappe.db.sql("""
+            select 
+                distinct custom_domain , grp.name 
+            from 
+                `tabUser Group` as grp left outer join 
+                `tabUser Group Member` as mem 
+                    on grp.name = mem.parent
+            where
+                grp.custom_company = %(company)s and
+                (
+                    grp.custom_group_manager = %(user)s or
+                    mem.user =%(user)s
+                )
+        """, {"user": user,"company":company}, as_dict=True)
+        
+        if domains:
+            doc.custom_user_domain = domains[0].custom_domain
+            doc.custom_user_group = domains[0].name
+    
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_user_same_company(doctype: str, txt: str, searchfield: str, start: int, page_len: int, filters: dict | list):
+    users=[]
+    company = frappe.defaults.get_user_default("company")
+    if company:
+        memberships = frappe.get_all(
+                "User Group",
+    
+        filters={"custom_company":company},
+                fields=["name"]
+    
+    
+        )
+        list_of_all=[]
+        if len(memberships)>0:
+            for us_gr in memberships :
+                list_of_all.append(frappe.get_all("User Group Member",filters={"parent":us_gr.name},fields=["user"]))
+        users = [item.user for sublist in list_of_all for item in sublist]
+        set_users=set(users)
+        users=list(set_users)
+        values = {'users': users,"txt": "%" + txt + "%",}
+        return frappe.db.sql("""
+            select name from  `tabUser` 
+            where  name in %(users)s and   tabUser.name LIKE %(txt)s""",values=values)
+
+def email_queue(doc, method=None):
+    import ast
+    allowed_domains=[]
+    setting = frappe.get_single('Advantage Settings')
+    allowed_domains_list=setting.allowed_domains
+    allowed_emails_list=setting.allowed_emails
+    if allowed_emails_list is not None:
+        try:
+            allowed_emails=ast.literal_eval(allowed_emails_list)
+        except Exception as e:
+            frappe.throw("Please Correct the email list in Advantage Settings")
+    if allowed_domains_list is not None:
+        try:
+            allowed_domains = ast.literal_eval(allowed_domains_list)
+        except Exception as e:
+            frappe.throw("Please Correct the email domains in Advantage Settings")
+    # 2. We will build a list of only the recipients that pass the filter
+    filtered_recipients = []
+
+    for row in doc.recipients:
+        email_address = row.recipient.lower().strip()
+        # Check if the email ends with any of the allowed domains
+        # We add the '@' to ensure we don't accidentally match 'othercompany.com' with 'company.com'
+        for domain in allowed_domains :
+            is_internal = email_address.endswith("@" + domain)
+            if is_internal :
+                break
+
+        if is_internal :
+            filtered_recipients.append(row)
+        else:
+            for email in allowed_emails:
+                if email.lower().strip()==email_address:
+                    filtered_recipients.append(row)
+                else:
+            # Optional: Log the blocked email in the Error Log for your reference
+                    frappe.log_error(f"Blocked email to external recipient: {email_address}", "Email Filter")
+
+    # 3. Update the document's recipient list
+    if not filtered_recipients:
+        # If NO recipients are internal, we stop the email from being sent
+        doc.recipients = []
+        doc.status = "Not Sent" 
+        # This prevents the background worker from picking it up
+        
+        # Optional: If you want to see a message on screen when this happens:
+        # frappe.msgprint("Email blocked: No internal recipients found.")
+    else:
+        # If there were mixed recipients (internal + external), 
+        # this line removes the external ones and keeps the internal ones.
+        doc.recipients = filtered_recipients
+
+
 @frappe.whitelist()
 def get_sender_email(user=None):
     if not user:
@@ -47,6 +171,16 @@ def update_emails_data(lead):
                 
             contact.save(ignore_permissions=True)
         frappe.db.commit()
+
+def get_employees_under_user(login_user):
+    employee_of_user=[]
+    user=login_user or frappe.session.user
+    owner_of = list(set(frappe.get_all('User Group',filters=[["custom_group_manager",'=',user]],fields=['*'],pluck='name')))
+    if len(owner_of) > 0 :
+        employee_of_user=list(set(frappe.get_all('User Group Member',filters=[["parent",'in',owner_of]],fields=['user'],pluck='user')))           
+    else:
+        employee_of_user.append(user)
+    return employee_of_user
 
 def get_permission_query_conditions(user):
     if not user:
