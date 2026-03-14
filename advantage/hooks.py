@@ -75,16 +75,20 @@ doctype_js ={"Lead": "public/js/lead.js" ,"Opportunity":"public/js/opportunity.j
 # }
 permission_query_conditions = {
 	"Task": "advantage.utils.get_permission_query_conditions",	
+    "ToDo": "advantage.override.todo.get_permission_query_conditions"
 }
 
 has_permission = {
  	"Task": "advantage.utils.has_permission",
+    "ToDo": "advantage.override.todo.has_permission"
 	
  }
 override_doctype_class = {
 	#"Contact": "advantage.override.contact.AdvantageContact",
     	"Lead": "advantage.override.lead.AdvantageLead",
-    "Customer":"advantage.override.customer.AdvantageCustomer"    
+    "Customer":"advantage.override.customer.AdvantageCustomer"   ,
+    "ToDo":"advantage.override.todo.AdvantageToDo"  ,  
+    "Event":"advantage.override.event.AdvantageEvent"     
 }
 # Generators
 # ----------
