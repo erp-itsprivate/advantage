@@ -3,10 +3,7 @@ frappe.ui.form.on("Lead", {
     onload_post_render(frm) {
          
         frm.remove_custom_button('Quotation','Create'); 
-        const forbidden_statuses = ['Opportunity', 'Converted','Do Not Contact'];
-        if (forbidden_statuses.includes(frm.doc.status)) {
-            frm.remove_custom_button('Customer','Create'); 
-        }
+        frm.remove_custom_button('Customer','Create'); 
         const forbidden_statuses1 = ['Do Not Contact'];
         if (forbidden_statuses1.includes(frm.doc.status)) {
               
@@ -28,10 +25,9 @@ frappe.ui.form.on("Lead", {
     refresh(frm) {
 		
         frm.remove_custom_button('Quotation','Create'); 
-        const forbidden_statuses = ['Opportunity', 'Converted','Do Not Contact'];
-        if (forbidden_statuses.includes(frm.doc.status)) {
-            frm.remove_custom_button('Customer','Create'); 
-        }
+        
+        frm.remove_custom_button('Customer','Create'); 
+       
         const forbidden_statuses1 = ['Do Not Contact'];
         if (forbidden_statuses1.includes(frm.doc.status)) {
               

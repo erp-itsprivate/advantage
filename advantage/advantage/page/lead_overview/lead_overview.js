@@ -549,7 +549,7 @@ LeadOverview = class {
                       
                       
                         me.is_programmatic_update=true;
-                       
+                        console.log(r.message[5]);
                         // Update DOM
                         $(wrapper).find("#events").html(r.message[0]);
                         $(wrapper).find("#product").html(r.message[1]);

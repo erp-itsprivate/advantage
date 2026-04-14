@@ -12,6 +12,11 @@ class AdvantageToDo(ToDo):
         super().validate()
         todo_event_additional_data(self)
     
+    def after_insert(self):
+        if self.reference_type=="Event":
+            event = frappe.get_doc('Event',self.reference_name)
+            todo_event_additional_data(event)
+    
     
 
 def get_permission_query_conditions(user):

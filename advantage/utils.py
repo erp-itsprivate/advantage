@@ -15,13 +15,19 @@ def update_cdrs_data(lead):
 
 
 def todo_event_additional_data(doc):
+    user=None
     if doc.doctype=="ToDo":
         if doc.reference_type == 'Opportunity' and doc.reference_name:
             opp = frappe.get_doc('Opportunity',doc.reference_name)
             if opp:
                 doc.custom_opportunity_domain = opp.opportunity_type
+        if doc.reference_type=="Event":
+            event = frappe.get_doc('Event',doc.reference_name)
+            doc.date=event.starts_on.date()
+
         user = doc.allocated_to
     else:
+       
         if len(doc.event_participants) > 0 :
             for row in doc.event_participants:
                 if row.reference_doctype == 'Opportunity' and row.reference_docname:
@@ -31,9 +37,9 @@ def todo_event_additional_data(doc):
         
         for todo in frappe.get_all('ToDo', filters=[["reference_type",'=','Event'],['reference_name','in',doc.name]]):
             todo_doc=frappe.get_doc('ToDo',todo.name)
-            todo_doc.date=doc.starts_on.date()
+            #todo_doc.date=doc.starts_on.date()
             user=todo_doc.allocated_to
-            todo_doc.save()          
+            #todo_doc.save()          
     
     company = frappe.defaults.get_user_default("Company")
     
@@ -56,8 +62,13 @@ def todo_event_additional_data(doc):
         """, {"user": user,"company":company}, as_dict=True)
         
         if domains:
-            doc.custom_user_domain = domains[0].custom_domain
-            doc.custom_user_group = domains[0].name
+            #doc.custom_user_domain = domains[0].custom_domain
+            #doc.custom_user_group = domains[0].name
+            doc.db_set('custom_user_domain',domains[0].custom_domain,False,False,False) 
+            doc.db_set('custom_user_group',domains[0].name,False,False,True)    
+          
+            
+   
     
 
 @frappe.whitelist()

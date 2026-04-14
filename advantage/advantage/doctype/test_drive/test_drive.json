@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-11 12:55:59.617130",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "planning_section",
+  "created_by",
+  "test_drive_plan_date",
+  "car",
+  "column_break_rqxt",
+  "executed",
+  "executed_by",
+  "test_drive_execution_date",
+  "notes",
+  "cancelled",
+  "cancellation_reason"
+ ],
+ "fields": [
+  {
+   "default": "frappe.session.user",
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "test_drive_plan_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Test Drive Plan Date"
+  },
+  {
+   "fieldname": "car",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Car",
+   "link_filters": "[[\"Item\",\"is_stock_item\",\"=\",1],[\"Item\",\"disabled\",\"=\",0]]",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_rqxt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "executed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Executed"
+  },
+  {
+   "depends_on": "eval: doc.executed",
+   "fieldname": "executed_by",
+   "fieldtype": "Link",
+   "label": "Executed By",
+   "mandatory_depends_on": "eval: doc.executed",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval: doc.executed",
+   "fieldname": "test_drive_execution_date",
+   "fieldtype": "Datetime",
+   "label": "Test Drive Execution Date",
+   "mandatory_depends_on": "eval: doc.executed"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "planning_section",
+   "fieldtype": "Section Break",
+   "label": "Planning"
+  },
+  {
+   "default": "0",
+   "fieldname": "cancelled",
+   "fieldtype": "Check",
+   "label": "Cancelled"
+  },
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancellation Reason"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-13 12:44:37.802921",
+ "modified_by": "Administrator",
+ "module": "Advantage",
+ "name": "Test Drive",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

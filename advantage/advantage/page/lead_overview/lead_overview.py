@@ -174,7 +174,7 @@ def get_events(lead,fields,limit):
             event_participants.append(frappe.get_all('Event Participants', filters=[["reference_doctype",'=','Opportunity'],['reference_docname','in',connections.get('opportunities')]],fields=['parent']))
         event_names =  [d.get('parent') for sublist in event_participants for d in sublist]
         #frappe.get_all('ToDo', filters=[["reference_type",'=','Event'],['reference_name','in',event_names]],fields=['allocated_to,reference_name'])
-        events= frappe.get_all('Event',filters=[['name','in',event_names]],fields=fields,limit=limit)
+        events= frappe.get_all('Event',filters=[['name','in',event_names]],fields=fields,limit=limit,order_by="creation desc")
         event_owner=frappe.get_all('ToDo', filters=[["reference_type",'=','Event'],['reference_name','in',event_names]],fields=['allocated_to','reference_name'])
         
         alloc_map = {} 
@@ -298,7 +298,7 @@ def get_notes(lead,fields,limit):
     try:
         connections=get_detailed_connections(lead)
         notes=[]
-        pre_data=frappe.get_all('CRM Note', filters=[['parent','=',lead],["parenttype","=","Lead"]],pluck='name',limit=limit)     
+        pre_data=frappe.get_all('CRM Note', filters=[['parent','=',lead],["parenttype","=","Lead"]],pluck='name',limit=limit,order_by="added_on DESC")     
         notes.append(frappe.get_all('CRM Note', filters=[['name','in',pre_data]],fields=fields))
         #if len(connections.get('opportunities')) > 0 :
         #    pre_data=frappe.get_all('CRM Note', filters=[['parent','in',connections.get('opportunities')],["parenttype","=","Opportunity"]],pluck='name',limit=limit)   

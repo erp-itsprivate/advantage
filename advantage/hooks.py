@@ -65,7 +65,7 @@ app_include_js = [
 
 # Home Pages
 # ----------
-doctype_js ={"Lead": "public/js/lead.js" ,"Opportunity":"public/js/opportunity.js"}
+doctype_js ={"Lead": "public/js/lead.js" ,"Opportunity":"public/js/opportunity.js","Prospect":"public/js/prospect.js","Customer":"public/js/customer.js"}
 # application home page (will override Website Settings)
 # home_page = "login"
 
@@ -86,6 +86,7 @@ has_permission = {
 override_doctype_class = {
 	#"Contact": "advantage.override.contact.AdvantageContact",
     	"Lead": "advantage.override.lead.AdvantageLead",
+        "Opportunity": "advantage.override.opportunity.AdvantageOpportunity",
     "Customer":"advantage.override.customer.AdvantageCustomer"   ,
     "ToDo":"advantage.override.todo.AdvantageToDo"  ,  
     "Event":"advantage.override.event.AdvantageEvent"     

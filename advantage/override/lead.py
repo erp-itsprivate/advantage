@@ -8,7 +8,18 @@ logger_exception.setLevel(20)
 
 
 class AdvantageLead(Lead):
-    def before_save(self):
+    def validate(self):
+        phone_fields = ["mobile_no", "phone", "whatsapp_no", "phone_ext","custom_additional_mobile","custom_additional_phone"]
+
+        for fieldname in phone_fields:
+            # Get the actual value of the field (equivalent to self.mobile_no)
+            value = getattr(self, fieldname)
+            
+            # Check if value exists (not None and not empty) and doesn't start with "00"
+            if value and not value.startswith("00"):
+                 frappe.throw(_("Phone / Mobile Number should start with 00"))
+        if not self.company :
+            frappe.throw(_("Company field is mandatory"))                                
         self.first_name=self.first_name.strip()
         self.last_name=self.last_name.strip()
         super().set_full_name()
@@ -40,73 +51,73 @@ class AdvantageLead(Lead):
                             """,values=values, as_dict=1)
             if len(data) >0 :
                 frappe.throw(_("Another Lead {0} with same mobile number").format(data[0].name ))
-                 
-        try:
-            self.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)
-            self.db_set('phone',normalize_syria_number(self.phone),False,False,True)
-            self.db_set('whatsapp_no',normalize_syria_number(self.whatsapp_no),False,False,True)
-            self.db_set('mobile_no',normalize_syria_number(self.mobile_no),False,False,True)
-            self.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)
-            self.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_phone),False,False,True)
-            # self.db_set('first_name',  self.first_name.strip(),False,False,True)
-            # self.db_set('last_name',  self.last_name.strip(),False,False,True) 
-            # self.db_set('title',  self.lead_name,False,False,True) 
-            # lead_name = " ".join(
-			# 	filter(None, [ (self.salutation or "").strip(), (self.first_name or "").strip(), (self.middle_name or "").strip(), (self.last_name or "").strip()])
-			# )
-            # self.db_set('lead_name',  lead_name,False,False,True) 
-            connections=get_detailed_connections(self.name)
-            if len(connections.get('opportunities')) > 0 :
-                for oppor in connections.get('opportunities'):
-                    opportunity=frappe.get_doc('Opportunity',oppor)
-                    opportunity.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)       
-                    opportunity.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_phone),False,False,True)      
-                    opportunity.db_set('contact_email',self.email_id,False,False,True)      
-                    opportunity.db_set('contact_mobile',normalize_syria_number(self.mobile_no),False,False,True)      
-                    opportunity.db_set('phone',normalize_syria_number(self.phone),False,False,True)    
-                    opportunity.db_set('whatsapp',normalize_syria_number(self.whatsapp_no),False,False,True)     
-                    opportunity.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)       
-            if  len(connections.get('customer')) > 0 :
-                for cust in connections.get('customer'):
-                    customer=frappe.get_doc('Customer',cust)
-                    customer.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_mobile),False,False,True)       
-                    customer.db_set('custom_phone',normalize_syria_number(self.phone),False,False,True)    
-                    customer.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)  
-                    customer.db_set('custom_mobile',normalize_syria_number(self.mobile_no),False,False,True)   
-                    customer.db_set('custom_email',self.email_id,False,False,True)       
-            unique_job_name = f"update_cdrs_data_{self.name}"                
-            frappe.enqueue(
-                                            update_cdrs_data, # python function or a module path as string
-                                            queue="default", # one of short, default, long
-                                            timeout=None, # pass timeout manually
-                                            is_async=True, # if this is True, method is run in worker
-                                            now=False, # if this is True, method is run directly (not in a worker) 
-                                            job_id=unique_job_name, # specify a job name
-                                            job_name=unique_job_name,
-                                            enqueue_after_commit=False, # enqueue the job after the database commit is done at the end of the request
-                                            at_front=False, # put the job at the front of the queue
-                                            lead=self.name
-                                    
-                            )
-            unique_job_name = f"update_emails_data_{self.name}"   
-            frappe.enqueue(
-                                            update_emails_data, # python function or a module path as string
-                                            queue="default", # one of short, default, long
-                                            timeout=None, # pass timeout manually
-                                            is_async=True, # if this is True, method is run in worker
-                                            now=False, # if this is True, method is run directly (not in a worker) 
-                                            job_id=unique_job_name, # specify a job name
-                                            job_name=unique_job_name,
-                                            enqueue_after_commit=False, # enqueue the job after the database commit is done at the end of the request
-                                            at_front=False, # put the job at the front of the queue
-                                            lead=self.name
-                                    
-                            )
-        except Exception as e :
-            logger_exception.error(f" file => advantagelead.py on_update self {self}  {frappe.get_traceback()} ")
-            frappe.log_error(message= f" file => advantagelead.py on_update self {self}  {frappe.get_traceback()} ", title="Advantage")  
+            try:
+                self.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)
+                self.db_set('phone',normalize_syria_number(self.phone),False,False,True)
+                self.db_set('whatsapp_no',normalize_syria_number(self.whatsapp_no),False,False,True)
+                self.db_set('mobile_no',normalize_syria_number(self.mobile_no),False,False,True)
+                self.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)
+                self.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_phone),False,False,True)
+                # self.db_set('first_name',  self.first_name.strip(),False,False,True)
+                # self.db_set('last_name',  self.last_name.strip(),False,False,True) 
+                # self.db_set('title',  self.lead_name,False,False,True) 
+                # lead_name = " ".join(
+                # 	filter(None, [ (self.salutation or "").strip(), (self.first_name or "").strip(), (self.middle_name or "").strip(), (self.last_name or "").strip()])
+                # )
+                # self.db_set('lead_name',  lead_name,False,False,True) 
+                connections=get_detailed_connections(self.name)
+                if len(connections.get('opportunities')) > 0 :
+                    for oppor in connections.get('opportunities'):
+                        opportunity=frappe.get_doc('Opportunity',oppor)
+                        opportunity.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)       
+                        opportunity.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_phone),False,False,True)      
+                        opportunity.db_set('contact_email',self.email_id,False,False,True)      
+                        opportunity.db_set('contact_mobile',normalize_syria_number(self.mobile_no),False,False,True)      
+                        opportunity.db_set('phone',normalize_syria_number(self.phone),False,False,True)    
+                        opportunity.db_set('whatsapp',normalize_syria_number(self.whatsapp_no),False,False,True)     
+                        opportunity.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)       
+                if  len(connections.get('customer')) > 0 :
+                    for cust in connections.get('customer'):
+                        customer=frappe.get_doc('Customer',cust)
+                        customer.db_set('custom_additional_phone',normalize_syria_number(self.custom_additional_mobile),False,False,True)       
+                        customer.db_set('custom_phone',normalize_syria_number(self.phone),False,False,True)    
+                        customer.db_set('custom_additional_mobile',normalize_syria_number(self.custom_additional_mobile),False,False,True)  
+                        customer.db_set('custom_mobile',normalize_syria_number(self.mobile_no),False,False,True)   
+                        customer.db_set('custom_email',self.email_id,False,False,True)       
+                unique_job_name = f"update_cdrs_data_{self.name}"                
+                frappe.enqueue(
+                                                update_cdrs_data, # python function or a module path as string
+                                                queue="default", # one of short, default, long
+                                                timeout=None, # pass timeout manually
+                                                is_async=True, # if this is True, method is run in worker
+                                                now=False, # if this is True, method is run directly (not in a worker) 
+                                                job_id=unique_job_name, # specify a job name
+                                                job_name=unique_job_name,
+                                                enqueue_after_commit=False, # enqueue the job after the database commit is done at the end of the request
+                                                at_front=False, # put the job at the front of the queue
+                                                lead=self.name
+                                        
+                                )
+                unique_job_name = f"update_emails_data_{self.name}"   
+                frappe.enqueue(
+                                                update_emails_data, # python function or a module path as string
+                                                queue="default", # one of short, default, long
+                                                timeout=None, # pass timeout manually
+                                                is_async=True, # if this is True, method is run in worker
+                                                now=False, # if this is True, method is run directly (not in a worker) 
+                                                job_id=unique_job_name, # specify a job name
+                                                job_name=unique_job_name,
+                                                enqueue_after_commit=False, # enqueue the job after the database commit is done at the end of the request
+                                                at_front=False, # put the job at the front of the queue
+                                                lead=self.name
+                                        
+                                )
+            except Exception as e :
+                logger_exception.error(f" file => advantagelead.py on_update self {self}  {frappe.get_traceback()} ")
+                frappe.log_error(message= f" file => advantagelead.py on_update self {self}  {frappe.get_traceback()} ", title="Advantage")  
 
-
+        else:
+             frappe.throw(_("Company field is mandatory"))
         
                 
                 
