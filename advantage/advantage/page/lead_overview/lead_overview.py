@@ -100,7 +100,7 @@ def get_critical_notes(lead):
 
 def get_opportunities(lead,limit):
     if frappe.has_permission('Opportunity', "read"):
-        return frappe.get_all('Opportunity', filters=[['party_name','=',lead]],fields=['creation','probability','opportunity_type','name','status','owner'],order_by='creation DESC',limit=limit)
+        return frappe.get_all('Opportunity', filters=[['party_name','=',lead]],fields=['creation','probability','opportunity_type','name','status','opportunity_owner'],order_by='creation DESC',limit=limit)
 
 @frappe.whitelist()
 def render_products(lead):

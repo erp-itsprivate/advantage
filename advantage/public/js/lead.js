@@ -1,7 +1,21 @@
 frappe.provide("advantage.utils");
+function init(frm) {
+    // disable create connections 
+    if (frm.dashboard && frm.dashboard.links_area) {
+         
+       frm.dashboard.links_area.wrapper.find('[data-doctype="Customer"] .btn-new').hide(); 
+       frm.dashboard.links_area.wrapper.find('[data-doctype="Opportunity"] .btn-new').hide(); 
+       frm.dashboard.links_area.wrapper.find('[data-doctype="Quotation"] .btn-new').hide(); 
+       frm.dashboard.links_area.wrapper.find('[data-doctype="Prospect"] .btn-new').hide(); 
+       
+    }    
+    // disable edit 
+     
+}
+
 frappe.ui.form.on("Lead", {
     onload_post_render(frm) {
-         
+		init(frm);
         frm.remove_custom_button('Quotation','Create'); 
         frm.remove_custom_button('Customer','Create'); 
         const forbidden_statuses1 = ['Do Not Contact'];
@@ -22,8 +36,11 @@ frappe.ui.form.on("Lead", {
         advantage.utils.set_leaf_filter(frm, "territory");
         
     },
+	setup: function(frm) {
+        init(frm);
+    },
     refresh(frm) {
-		
+		init(frm);
         frm.remove_custom_button('Quotation','Create'); 
         
         frm.remove_custom_button('Customer','Create'); 

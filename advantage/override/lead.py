@@ -19,18 +19,14 @@ class AdvantageLead(Lead):
             if value and not value.startswith("00"):
                  frappe.throw(_("Phone / Mobile Number should start with 00"))
         if not self.company :
-            frappe.throw(_("Company field is mandatory"))                                
+            frappe.throw(_("Company field is mandatory"))     
+        self.check_duplicate_mobile_no()                           
         self.first_name=self.first_name.strip()
         self.last_name=self.last_name.strip()
         super().set_full_name()
         self.title=self.lead_name
         
-    def on_update(self):
-    #    for link in frappe.get_all('Dynamic Link', filters=[['link_doctype','=','Lead'],['link_name','=',self.name]],pluck='parent'):
-    #         for contact in frappe.get_all('Contact Phone', filters=[['parent','=',link],["phone","=",self.mobile_no]],fields=['*']):
-    #             contact_phone=frappe.get_doc('Contact Phone',{'parent':link,'phone':self.mobile_no})
-    #             contact_phone.db_set('is_primary_mobile_no',True,False,False,True)
-        if (self.company is not None and self.company != ""):
+    def check_duplicate_mobile_no(self):
             phone_ext=self.phone_ext or  self.mobile_no
             phone=self.phone or self.mobile_no
             whatsapp_no=self.whatsapp_no or self.mobile_no
@@ -51,6 +47,14 @@ class AdvantageLead(Lead):
                             """,values=values, as_dict=1)
             if len(data) >0 :
                 frappe.throw(_("Another Lead {0} with same mobile number").format(data[0].name ))
+
+    def on_update(self):
+    #    for link in frappe.get_all('Dynamic Link', filters=[['link_doctype','=','Lead'],['link_name','=',self.name]],pluck='parent'):
+    #         for contact in frappe.get_all('Contact Phone', filters=[['parent','=',link],["phone","=",self.mobile_no]],fields=['*']):
+    #             contact_phone=frappe.get_doc('Contact Phone',{'parent':link,'phone':self.mobile_no})
+    #             contact_phone.db_set('is_primary_mobile_no',True,False,False,True)
+        if (self.company is not None and self.company != ""):
+            self.check_duplicate_mobile_no()
             try:
                 self.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)
                 self.db_set('phone',normalize_syria_number(self.phone),False,False,True)

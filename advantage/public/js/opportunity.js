@@ -1,7 +1,7 @@
 frappe.provide("advantage.utils");
 function toggle_read_only(frm) {
     if (frm.doc.status !== 'Open') {
-        frm.disable_form(true);
+         frm.disable_form(true);
     } 
     if (frm.doc.custom_opportunity_cycle !== 'New' && frm.doc.opportunity_owner !== frappe.session.user && frappe.session.user !=='Administrator' ) {
         frm.disable_form(true);
@@ -10,6 +10,18 @@ function toggle_read_only(frm) {
             indicator: 'orange'
         }, 3);
     } 
+}
+function create_quotation() {
+    frappe.model.open_mapped_doc({
+        method: "erpnext.crm.doctype.opportunity.opportunity.make_quotation",
+        frm: this.frm,
+    });
+}
+function make_customer() {
+    frappe.model.open_mapped_doc({
+        method: "erpnext.crm.doctype.opportunity.opportunity.make_customer",
+        frm: this.frm,
+    });
 }
 function get_item_rate(frm, cdt, cdn) {
     try {
@@ -49,41 +61,67 @@ function get_item_rate(frm, cdt, cdn) {
 }
 
 frappe.ui.form.on("Opportunity", {
-    onload_post_render(frm) {
-        frm.remove_custom_button('Customer', 'Create');
-        frm.remove_custom_button('Supplier Quotation','Create'); 
-        frm.remove_custom_button('Request For Quotation','Create'); 
-        frm.remove_custom_button('Close'); 
+    custom_cancel_test_drive :function(frm){
+        if (frm.doc.custom_need_test_drive != 1)
+        {
+            frappe.throw("test drive must be checked");
+        }
     },
     onload: function(frm) {
        
         advantage.utils.set_leaf_filter(frm, "territory");
         frm.doc.opportunity_type = "Sales";
-        frm.remove_custom_button('Customer', 'Create');
-        frm.remove_custom_button('Supplier Quotation','Create'); 
-        frm.remove_custom_button('Request For Quotation','Create'); 
-        frm.remove_custom_button('Close'); 
+        console.log(frm.doc.custom_need_test_drive);
+        if (frm.doc.custom_need_test_drive == 1)
+        { 
+            console.log(frm.doc.custom_need_test_drive);
+          frm.set_df_property('custom_need_test_drive', 'read_only', 1);
+        } 
        // toggle_read_only(frm);
         frm.set_df_property('items', 'cannot_add_rows', false);
         frm.get_docfield('items', 'rate').read_only = 1;
     },
     setup: function(frm) {
-       
+        const original_add_button = frm.add_custom_button;
+
+        // Overwrite it with our own rule
+        frm.add_custom_button = function() {
+            // Check if the first argument (the button name) is the one we want to hide
+                
+            if ( arguments[3] !== undefined && arguments[3] == true )
+                return original_add_button.apply(frm, arguments);
+            let arr=['Quotation','Customer','Supplier Quotation','Request For Quotation','Close','التسعيرة من المورد','طلب عرض أسعار','عرض أسعار','أغلق','العميل']
+            if ( arr.includes(arguments[0])  ) {
+                 
+                return null; // Block the button from being created!
+            }
+           
+            // Otherwise, let Frappe create the button normally
+            return original_add_button.apply(frm, arguments);
+        };
+
         advantage.utils.set_leaf_filter(frm, "territory");
         frm.doc.opportunity_type = "Sales";
-        frm.remove_custom_button('Customer', 'Create');
-        frm.remove_custom_button('Supplier Quotation','Create'); 
-        frm.remove_custom_button('Request For Quotation','Create'); 
-        frm.remove_custom_button('Close'); 
+       
         //toggle_read_only(frm);
         frm.set_df_property('items', 'cannot_add_rows', false);
         frm.get_docfield('items', 'rate').read_only = 1;
+         
+        
     },
     status: function(frm) {
         // Run when status changes
         toggle_read_only(frm);
     },
+   
+
     refresh: function(frm) {
+   
+        if (frm.doc.custom_need_test_drive == 1)
+        {
+            console.log(frm.doc.custom_need_test_drive);
+             frm.set_df_property('custom_need_test_drive', 'read_only', 1);
+        } 
         if (frm.is_new()) {
             frm.set_value('opportunity_owner', frappe.session.user);
         }
@@ -93,9 +131,7 @@ frappe.ui.form.on("Opportunity", {
                 enabled: 1
             }
         }));
-        console.log(frm.doc.opportunity_type);
-        console.log(frm.doc.custom_domain);
-        console.log(frm.doc.opportunity_owner) ;
+         
         frm.remove_custom_button('Customer', 'Create');
         frm.remove_custom_button('Supplier Quotation','Create'); 
         frm.remove_custom_button('Request For Quotation','Create'); 
@@ -110,16 +146,51 @@ frappe.ui.form.on("Opportunity", {
                 }
             };
         });
-        const forbidden_statuses = ['Lost', 'Closed'];
-        if (forbidden_statuses.includes(frm.doc.status))
-        {
-            frm.remove_custom_button('Customer','Create'); 
-        }
+       
+       
         const forbidden_statuses1 = ['Converted', 'Handed Over','Closed','New'];
-        if (forbidden_statuses1.includes(frm.doc.custom_opportunity_cycle) || frm.doc.opportunity_owner != frappe.session.user) 
+        /*if (forbidden_statuses1.includes(frm.doc.custom_opportunity_cycle) || frm.doc.opportunity_owner != frappe.session.user) 
         {
             frm.remove_custom_button('Quotation','Create'); 
+        }*/
+        console.log(frm.doc.custom_opportunity_cycle);
+        if (! forbidden_statuses1.includes(frm.doc.custom_opportunity_cycle)  && frm.doc.opportunity_owner == frappe.session.user) 
+        {
+            console.log('create quotaion');
+            frm.add_custom_button(
+				__("Quotation"),
+				function () {
+					frm.trigger("create_quotation");
+				},
+				__("Create"),true
+			);
+
         }
+        frm.set_query("car", "custom_test_drive_history", function( ) {
+             
+            
+             let allowed_items = [];
+             
+            if (frm.doc.items) {
+                // Loop through Table A and get the item codes
+                frm.doc.items.forEach(row => {
+                    if (row.item_name) {
+                        allowed_items.push(row.item_name);
+                    }
+                });
+            }
+             
+            // 2. Return the filter to apply to Table B
+            // If Table A is empty, this will prevent anything from being selected in B
+            return {
+                filters: [
+                    ['Item','item_name', 'in', allowed_items],
+                    ["Item","is_stock_item","=",1],["Item","disabled","=",0]
+                ]
+            };
+
+           
+        });
     },
     currency(frm) {
         // Clear price list
@@ -151,6 +222,22 @@ frappe.ui.form.on("Opportunity", {
         } catch (err) {
             console.error("Error updating item rates:", err);
         }
+    }
+});
+frappe.ui.form.on('Test Drive', {
+    custom_test_drive_history_remove(frm,cdt, cdn) {
+        console.log(frm);
+        console.log(cdt);
+            console.log( cdn);
+            
+            frappe.db.count('Test Drive',cdn).then(exists => {
+                if (exists) {
+                    frappe.throw(__("You can't delete please cancel it !"));
+                }  
+            });
+    },
+    custom_test_drive_history_add(frm,cdt, cdn) {
+        frappe.model.set_value(cdt, cdn, 'created_by', frappe.session.user);
     }
 });
 frappe.ui.form.on('Opportunity Item', {

@@ -1,0 +1,29 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2026-04-25 12:24:01.226558",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": null,
+ "modified": "2026-04-25 12:31:19.525764",
+ "modified_by": "Administrator",
+ "module": "Advantage",
+ "name": "test",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": " \nselect B.name,B.custom_opportunity_cycle,c.state from `tabOpportunity` B left join (\n select  action_date,parent,state, rn  from (\nselect action_date,parent,state,   ROW_NUMBER() OVER(PARTITION BY parent ORDER BY action_date DESC) as rn from `tabOpportunity Cycle Item`) A\nwhere A.rn=1   )  c on (c.parent=B.name ) where c.state != B.custom_opportunity_cycle    \n ",
+ "ref_doctype": "Opportunity",
+ "report_name": "test",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Website Manager"
+  }
+ ],
+ "timeout": 0
+}
