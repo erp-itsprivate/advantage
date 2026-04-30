@@ -15,6 +15,20 @@ function init(frm) {
 
 frappe.ui.form.on("Lead", {
     onload_post_render(frm) {
+        frm.add_custom_button = function() {
+            // Check if the first argument (the button name) is the one we want to hide
+             
+            if ( arguments[3] !== undefined && arguments[3] == true )
+                return original_add_button.apply(frm, arguments);
+            let arr=['Quotation','Customer','عرض أسعار','العميل']
+            if ( arr.includes(arguments[0])  ) {
+                 
+                return null; // Block the button from being created!
+            }
+           
+            // Otherwise, let Frappe create the button normally
+            return original_add_button.apply(frm, arguments);
+        };
 		init(frm);
         frm.remove_custom_button('Quotation','Create'); 
         frm.remove_custom_button('Customer','Create'); 

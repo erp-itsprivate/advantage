@@ -37,7 +37,7 @@ class AdvantageOpportunity(Opportunity):
                 message += f"<li>{doc_link}</li>"
 
             # 3. Close the list
-                message += "</ul>"
+            message += "</ul>"
 
             # 4. Show the message
             html_message = """ Can't create new opportunity ,opportunities exists  :<br><br>
@@ -67,23 +67,38 @@ class AdvantageOpportunity(Opportunity):
                         start_dt = get_datetime(row.test_drive_plan_date)
                         end_dt = get_datetime(row.test_drive_execution_date)
 
-                        if start_dt <= end_dt:
+                        if end_dt <= start_dt :
                             frappe.throw(frappe._("execution date must be more than plan date"))
                     #if  get_datetime(row.test_drive_plan_date) < now_datetime():
                      #       frappe.throw(frappe._("Test drive execution date can't be in the past"))
                 
-        if len(self.custom_opportunity_cycle_history) == 0 :
-            # Set your custom datetime field to the current time
-            #doc.custom_opportunity_cycle_latest_datetime = frappe.utils.now()
-            new_item = self.append("custom_opportunity_cycle_history", {})
+        # if len(self.custom_opportunity_cycle_history) == 0 :
+        #     # Set your custom datetime field to the current time
+        #     #doc.custom_opportunity_cycle_latest_datetime = frappe.utils.now()
+        #     new_item = self.append("custom_opportunity_cycle_history", {})
 
-            # 3. Set the values for the new row
-            new_item.user = frappe.session.user
-            new_item.action_date = frappe.utils.now()
-            new_item.state = self.custom_opportunity_cycle
+        #     # 3. Set the values for the new row
+        #     new_item.user = frappe.session.user
+        #     new_item.action_date = frappe.utils.now()
+        #     new_item.state = self.custom_opportunity_cycle
         if self.custom_opportunity_cycle != self.get_db_value("custom_opportunity_cycle"):
             # Set your custom datetime field to the current time
             #doc.custom_opportunity_cycle_latest_datetime = frappe.utils.now()
+            action_date=frappe.utils.now()
+            cycle_rows = self.get("custom_opportunity_cycle_history") 
+        
+            # 2. Find rows with no action_end_date
+            open_rows = [row for row in cycle_rows if not row.action_end_date]
+            
+            if open_rows:
+                # 3. Sort them so the newest action_date is first (descending)
+                open_rows.sort(key=lambda x: x.action_date or "", reverse=True)
+                
+                # 4. Update the most recent one in memory!
+                previous_record = open_rows[0]
+                previous_record.action_end_date = action_date
+
+                
             new_item = self.append("custom_opportunity_cycle_history", {})
 
             # 3. Set the values for the new row

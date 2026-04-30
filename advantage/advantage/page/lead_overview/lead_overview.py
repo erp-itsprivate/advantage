@@ -40,7 +40,7 @@ def get_lead_info(lead):
             activities_section=str(frappe.render_template("templates/includes/activities_section.html",{"template_data":{"lead":lead,"num_of_data":len(activites),"calls":activites}}))
         lead=frappe.get_doc('Lead',lead).as_dict()
         if (frappe.db.exists('User',lead.get("lead_owner"))):
-            lead.update({"lead_owner":frappe.get_doc("User",lead.get("lead_owner")).username})
+            lead.update({"lead_owner":frappe.get_doc("User",lead.get("lead_owner")).full_name})
         customer=None
         if (frappe.db.exists('Customer',{"lead_name":lead.name})):
             customer=frappe.get_doc('Customer',{"lead_name":lead.name})

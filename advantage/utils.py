@@ -247,29 +247,33 @@ def get_detailed_connections(lead_name):
     connections = {}
 
     # 1. Get Opportunities
-    connections['opportunities'] = frappe.db.get_list("Opportunity", 
-        filters={"party_name": lead_name, "opportunity_from": "Lead"},
-        pluck='name'
-    )
+    if frappe.has_permission('Opportunity', "read"):
+        connections['opportunities'] = frappe.db.get_list("Opportunity", 
+            filters={"party_name": lead_name, "opportunity_from": "Lead"},
+            pluck='name'
+        )
 
     # 2. Get Quotations
-    connections['quotations'] = frappe.db.get_list("Quotation", 
-        filters={"party_name": lead_name, "quotation_to": "Lead"},
-       pluck='name'
-    )
+    if frappe.has_permission('Quotation', "read"):
+        connections['quotations'] = frappe.db.get_list("Quotation", 
+            filters={"party_name": lead_name, "quotation_to": "Lead"},
+        pluck='name'
+        )
 
     # 3. Get Prospects (If linked)
     # Note: Prospects usually link TO leads, or Leads link TO prospects depending on flow
-    connections['prospects'] = frappe.db.get_list("Prospect",
-        filters={"lead": lead_name},
-        pluck='name'
-    )
+    if frappe.has_permission('Prospect', "read"):
+        connections['prospects'] = frappe.db.get_list("Prospect",
+            filters={"lead": lead_name},
+            pluck='name'
+        )
 
     # 4. Get Customer (If converted)
-    connections['customer'] = frappe.db.get_list("Customer",
-        filters={"lead_name": lead_name},
-       pluck='name'
-    )
+    if frappe.has_permission('Customer', "read"):
+        connections['customer'] = frappe.db.get_list("Customer",
+            filters={"lead_name": lead_name},
+        pluck='name'
+        )
 
     return connections
 

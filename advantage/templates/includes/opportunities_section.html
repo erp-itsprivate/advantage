@@ -28,7 +28,7 @@
                     <span>{{ _('Type') }} </span>
                 </div>
                 <div class="col-sm-3 ellipsis hidden-xs">
-                    <span> {{ _('Owner') }} </span>
+                    <span>  {{   _('Owner') }} </span>
                 </div>
                 <div class="col-sm-1 ellipsis hidden-xs">
                     <span>%</span>
@@ -62,7 +62,7 @@
                         </div>
                         
                         <div class="col-sm-3 ellipsis hidden-xs">
-                            <span>{{rec.opportunity_owner}}</span>
+                            <span> {{ frappe.db.get_value("User", rec.opportunity_owner, "full_name") }} </span>
                         </div>
                         <div class="col-sm-1 ellipsis hidden-xs">
                             <span>{{rec.probability}}</span>
