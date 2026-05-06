@@ -1,6 +1,11 @@
 import frappe
 from frappe.permissions import AUTOMATIC_ROLES
 import datetime
+from frappe.model.document import Document
+from frappe.model.mapper import get_mapped_doc
+from erpnext.selling.doctype.quotation.quotation import create_customer_from_lead,handle_mandatory_error
+from erpnext.crm.doctype.lead.lead import _make_customer 
+
 
 def update_cdrs_data(lead):
     lead_doc=frappe.get_doc('Lead',lead)
@@ -13,6 +18,63 @@ def update_cdrs_data(lead):
                 cdr=frappe.get_doc("PBX CDRs",a)
                 cdr.db_set('related_doctype_id',lead_doc.name,False,False,True)                   
 
+def advantage_make_customer(source_name, ignore_permissions=False):
+    frappe.log_error(f"Customer Create from Quotation: {source_name}", "Cutomer Creation")
+    quotation = frappe.db.get_value(
+                "Quotation",
+                source_name,
+                ["order_type", "quotation_to", "party_name", "customer_name","opportunity"],
+                as_dict=1,
+        )
+    if quotation.quotation_to == "Customer":
+        return frappe.get_doc("Customer", quotation.party_name)
+    existing_customer = None
+    if quotation.quotation_to == "Lead":
+        existing_customer = frappe.db.get_value("Customer", {"lead_name": quotation.party_name})
+    elif quotation.quotation_to == "Prospect":
+        existing_customer = frappe.db.get_value("Customer", {"prospect_name": quotation.party_name})
+    if existing_customer:
+        return frappe.get_doc("Customer", existing_customer)
+    if quotation.quotation_to == "Lead":
+        return  advantage_create_customer_from_lead(quotation.party_name,quotation.opportunity, ignore_permissions=ignore_permissions)
+    elif quotation.quotation_to == "Prospect":
+       return   advantage_make_customer_prospect(quotation.party_name, ignore_permissions=ignore_permissions)
+        
+     
+    return None
+
+def advantage_create_customer_from_lead(lead_name, opportunity,ignore_permissions=False):
+    
+    customer = _make_customer(lead_name, ignore_permissions=ignore_permissions)
+    customer.opportunity_name=opportunity
+    customer.flags.ignore_permissions = ignore_permissions
+    try:
+        customer.insert()
+        return customer
+    except frappe.MandatoryError as e:
+        handle_mandatory_error(e, customer, lead_name)
+
+@frappe.whitelist()
+def advantage_make_customer_prospect(source_name: str, target_doc: str | Document | None = None):
+    
+    def set_missing_values(source, target):
+        target.customer_type = "Company"
+        target.company_name = source.name
+        target.customer_group = source.customer_group or frappe.db.get_default("Customer Group")
+    doclist = get_mapped_doc(
+                "Prospect",
+                source_name,
+                {
+                        "Prospect": {
+                                "doctype": "Customer",
+                                "field_map": {"company_name": "customer_name", "currency": "default_currency", "fax": "fax","name":"prospect_name"},
+                        }
+                },
+                target_doc,
+                set_missing_values,
+                ignore_permissions=False,
+        )
+    return doclist
 
 def todo_event_additional_data(doc):
     user=None

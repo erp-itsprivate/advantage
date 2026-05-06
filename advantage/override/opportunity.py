@@ -71,7 +71,7 @@ class AdvantageOpportunity(Opportunity):
                             frappe.throw(frappe._("execution date must be more than plan date"))
                     #if  get_datetime(row.test_drive_plan_date) < now_datetime():
                      #       frappe.throw(frappe._("Test drive execution date can't be in the past"))
-                
+       
         # if len(self.custom_opportunity_cycle_history) == 0 :
         #     # Set your custom datetime field to the current time
         #     #doc.custom_opportunity_cycle_latest_datetime = frappe.utils.now()
@@ -103,7 +103,7 @@ class AdvantageOpportunity(Opportunity):
 
             # 3. Set the values for the new row
             new_item.user = frappe.session.user
-            new_item.action_date = frappe.utils.now()
+            new_item.action_date = action_date
             new_item.state = self.custom_opportunity_cycle
     
         # 1) Ensure opportunity_owner is set

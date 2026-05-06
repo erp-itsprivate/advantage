@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../../../apps/advantage/advantage/public/js/utils.bundle.js"],
   "sourcesContent": ["frappe.provide(\"advantage.utils\");\r\n\r\nadvantage.utils.set_leaf_filter = function(frm, fieldname) {\r\n    frm.set_query(fieldname, function() {\r\n        return {\r\n            filters: {\r\n                is_group: false\r\n            }\r\n        };\r\n    });\r\n};"],
-  "mappings": ";;AAAA,SAAO,QAAQ,iBAAiB;AAEhC,YAAU,MAAM,kBAAkB,SAAS,KAAK,WAAW;AACvD,QAAI,UAAU,WAAW,WAAW;AAChC,aAAO;AAAA,QACH,SAAS;AAAA,UACL,UAAU;AAAA,QACd;AAAA,MACJ;AAAA,IACJ,CAAC;AAAA,EACL;",
-  "names": []
+  "mappings": "MAAA,OAAO,QAAQ,iBAAiB,EAEhC,UAAU,MAAM,gBAAkB,SAASA,EAAKC,EAAW,CACvDD,EAAI,UAAUC,EAAW,UAAW,CAChC,MAAO,CACH,QAAS,CACL,SAAU,EACd,CACJ,CACJ,CAAC,CACL",
+  "names": ["frm", "fieldname"]
 }

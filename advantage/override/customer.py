@@ -7,9 +7,13 @@ logger_exception.setLevel(20)
 class AdvantageCustomer(Customer):
     def validate(self):
         super().validate()
+        if not self.opportunity_name or self.opportunity_name == "":
+            frappe.throw(frappe._("You can't create customer in this way (without opportunity )"))
+        if not self.lead_name and not self.prospect_name :
+            frappe.throw(frappe._("You need to add Lead / Prospect "))
         if self.account_manager is None or self.account_manager == "":
             self.account_manager=frappe.session.user
-
+       
             
     def on_update(self):
         try:
