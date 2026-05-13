@@ -70,7 +70,9 @@ frappe.ui.form.on("Opportunity", {
     onload: function(frm) {
        
         advantage.utils.set_leaf_filter(frm, "territory");
-        frm.doc.opportunity_type = "Sales";
+        console.log(frm.doc.opportunity_type);
+        if (frm.doc.opportunity_type == undefined || frm.doc.opportunity_type == "") 
+         {frm.doc.opportunity_type = "Sales";}
         console.log(frm.doc.custom_need_test_drive);
         if (frm.doc.custom_need_test_drive == 1)
         { 
@@ -99,9 +101,11 @@ frappe.ui.form.on("Opportunity", {
             // Otherwise, let Frappe create the button normally
             return original_add_button.apply(frm, arguments);
         };
+        console.log(frm.doc.opportunity_type);
 
         advantage.utils.set_leaf_filter(frm, "territory");
-        frm.doc.opportunity_type = "Sales";
+        if (frm.doc.opportunity_type == undefined || frm.doc.opportunity_type == "") 
+         {frm.doc.opportunity_type = "Sales"; }
        
         //toggle_read_only(frm);
         frm.set_df_property('items', 'cannot_add_rows', false);
