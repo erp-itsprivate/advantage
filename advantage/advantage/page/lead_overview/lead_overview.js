@@ -794,43 +794,75 @@ LeadOverview = class {
 				],
                 primary_action(values) {
                     
-                    values.doctype="CRM Note"                 
-                    values.parentfield="notes";
-                    values.parent=me.lead_field.get_value();
-                    values.parenttype="Lead";
-                    values.added_on= frappe.datetime.now_datetime();
-                    values.added_by=frappe.session.user;
-                    frappe.call({
-                        method: "frappe.client.insert",
-                        args: { doc: values },                    
-                        callback: function (r) {
-                            if (!r.exc) {
-                                frappe.call({
-                                    method: 'advantage.advantage.page.lead_overview.lead_overview.render_notes',
-                                    args: {
-                                        'lead': values.parent
-                                        
-                                        
-                                        
-                                    },
-                                    callback: function(r) {
-                                        if (r.message) {
-                                            
-                                          // $(wrapper).find("#product").empty();
-                                          $(wrapper).find("#notes").html(r.message);
-                                            
-                                        }
-                                    }
-                                });
-                            
-                            } else {
-                                frappe.msgprint(
-                                    __("There were errors while creating the document. Please try again.")
-                                );
-                            }
-                        },
-                    });
-                    d.hide();
+                    var data = d.get_values();
+                    /* values.doctype="CRM Note"                 
+                     values.parentfield="notes";
+                     values.parent=me.lead_field.get_value();
+                     values.parenttype="Lead";
+                     values.added_on= frappe.datetime.now_datetime();
+                     values.added_by=frappe.session.user;*/
+                     frappe.db.get_doc("Lead",me.lead_field.get_value()).then(doc => {
+                         frappe.call({
+                             method: "add_note",
+                             doc: doc,
+                             args: {
+                                 note: data.note
+                             },
+                             callback: function (r) {
+                                 if (!r.exc) {
+                                     frappe.call({
+                                         method: 'advantage.advantage.page.lead_overview.lead_overview.render_notes',
+                                         args: {
+                                             'lead': me.lead_field.get_value()
+                                             
+                                             
+                                             
+                                         },
+                                         callback: function(r) {
+                                             if (r.message) {
+                                                 
+                                               // $(wrapper).find("#product").empty();
+                                               $(wrapper).find("#notes").html(r.message);
+                                                 
+                                             }
+                                         }
+                                     });
+                                 }
+                             }
+                         });
+                     });
+                    /* frappe.call({
+                         method: "frappe.client.insert",
+                         args: { doc: values },                    
+                         callback: function (r) {
+                             if (!r.exc) {
+                                 frappe.call({
+                                     method: 'advantage.advantage.page.lead_overview.lead_overview.render_notes',
+                                     args: {
+                                         'lead': values.parent
+                                         
+                                         
+                                         
+                                     },
+                                     callback: function(r) {
+                                         if (r.message) {
+                                             
+                                           // $(wrapper).find("#product").empty();
+                                           $(wrapper).find("#notes").html(r.message);
+                                             
+                                         }
+                                     }
+                                 });
+                             
+                             } else {
+                                 frappe.msgprint(
+                                     __("There were errors while creating the document. Please try again.")
+                                 );
+                             }
+                         },
+                     });*/
+                     d.hide();
+                 
                 },
 				primary_action_label: __("Add"),
 			});

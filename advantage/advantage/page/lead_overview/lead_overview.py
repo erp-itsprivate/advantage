@@ -239,17 +239,34 @@ def get_products(lead,fields,limit):
         products.append(data)
         if len(connections.get('opportunities')) > 0 :
                 pre_data=frappe.get_all('Opportunity Item', filters=[["parenttype",'=','Opportunity'],['parent','in',connections.get('opportunities')]],pluck='name',limit=limit)
-                pre_fields=['item_name','creation','parent']
+                pre_fields=['item_name','creation','parent','item_code']
             
                 meta = frappe.get_meta("Opportunity Item")
                 doctype_fields=[item.fieldname for item in meta.fields]
                 filtered = [item for item in fields if item in doctype_fields] 
                 all_fields = pre_fields + filtered
                 data=frappe.get_all('Opportunity Item', filters=[['name','in',pre_data]],fields=all_fields)
+                is_customer=False
+                if  frappe.get_doc('Lead',lead).status == "Converted":
+                    is_customer=True
                 for item in data: 
+                    item['item'] =item.pop('item_name')                    
                     item['subject'] = 'Interested In'
-                    item['item'] =item.pop('item_name')
+                    if is_customer ==True :
+                        values = {  'opp':item.parent,'item_code': item.item_code}
+                        count =frappe.db.sql("""  select count(*) from `tabSales Order Item`  where parent in (
+                            select name from `tabSales Order` where customer in (
+                            select name from `tabCustomer` where opportunity_name=%(opp)s )) 
+                            and item_code=%(item_code)s """,values=values
+                            
+                            )[0][0]
+                        if count == 1:
+                            item['subject'] = 'Sold by company'
                     item['link']="opportunity/"+item.pop('parent')
+    
+
+                    
+                   
                 products.append(data)
         if len(connections.get('customer')) > 0 :
                 pre_data=frappe.get_all('Customer Items', filters=[['parent','in',connections.get('customer')]],pluck='name',limit=limit)

@@ -79,7 +79,9 @@ class AdvantageLead(Lead):
                         opportunity.db_set('contact_mobile',normalize_syria_number(self.mobile_no),False,False,True)      
                         opportunity.db_set('phone',normalize_syria_number(self.phone),False,False,True)    
                         opportunity.db_set('whatsapp',normalize_syria_number(self.whatsapp_no),False,False,True)     
-                        opportunity.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)       
+                        opportunity.db_set('phone_ext',normalize_syria_number(self.phone_ext),False,False,True)   
+                        opportunity.db_set('contact_display',self.title,False,False,True)        
+                        opportunity.db_set('title',self.title,False,False,True)     
                 if  len(connections.get('customer')) > 0 :
                     for cust in connections.get('customer'):
                         customer=frappe.get_doc('Customer',cust)

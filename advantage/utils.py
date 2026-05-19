@@ -38,7 +38,7 @@ def advantage_make_customer(source_name, ignore_permissions=False):
     if quotation.quotation_to == "Lead":
         return  advantage_create_customer_from_lead(quotation.party_name,quotation.opportunity, ignore_permissions=ignore_permissions)
     elif quotation.quotation_to == "Prospect":
-       return   advantage_make_customer_prospect(quotation.party_name, ignore_permissions=ignore_permissions)
+       return   advantage_make_customer_prospect(quotation.party_name)
         
      
     return None

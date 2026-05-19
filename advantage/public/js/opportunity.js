@@ -17,6 +17,41 @@ function create_quotation() {
         frm: this.frm,
     });
 }
+function add_note(frm) {
+    
+    var d = new frappe.ui.Dialog({
+        title: __("Add a Note"),
+        fields: [
+            {
+                label: "Note",
+                fieldname: "note",
+                fieldtype: "Text Editor",
+                reqd: 1,
+                enable_mentions: true,
+            },
+        ],
+        primary_action(values) {
+            var data = d.get_values();
+ 
+            frappe.call({
+                method: "add_note",
+                doc: frm.doc,
+                args: {
+                    note: data.note
+                },
+                callback: function (r) {
+                    if (!r.exc) {
+                    
+                    }
+                }
+            });
+            d.hide();
+        },
+        primary_action_label: __("Add"),
+    });
+    d.show();
+};
+
 function make_customer() {
     frappe.model.open_mapped_doc({
         method: "erpnext.crm.doctype.opportunity.opportunity.make_customer",
@@ -68,7 +103,14 @@ frappe.ui.form.on("Opportunity", {
         }
     },
     onload: function(frm) {
-       
+        frm.add_custom_button(
+            __("Add Note"),
+            function () {
+                 
+                add_note(frm);
+            },
+            
+        );
         advantage.utils.set_leaf_filter(frm, "territory");
         console.log(frm.doc.opportunity_type);
         if (frm.doc.opportunity_type == undefined || frm.doc.opportunity_type == "") 
@@ -120,7 +162,14 @@ frappe.ui.form.on("Opportunity", {
    
 
     refresh: function(frm) {
-   
+        frm.add_custom_button(
+            __("Add Note"),
+            function () {
+                 
+                add_note(frm);
+            },
+            
+        );
         if (frm.doc.custom_need_test_drive == 1)
         {
             console.log(frm.doc.custom_need_test_drive);
