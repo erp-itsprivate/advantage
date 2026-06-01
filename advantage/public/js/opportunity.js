@@ -62,33 +62,77 @@ function get_item_rate(frm, cdt, cdn) {
     try {
         const row = locals[cdt][cdn];
         const price_list = frm.doc.custom_price_list;
-
+         
         if (!row?.item_code || !price_list) return;
 
+        var item = frappe.get_doc("Item", row.item_code);
         frappe.call({
-            method: 'frappe.client.get_value',
+            method: "advantage.utils.get_rate",
             args: {
-                doctype: 'Item Price',
-                filters: {
-                    item_code: row.item_code,
-                    price_list: price_list
+                args:   {
+                    "item_code": row.item_code,
+                    "doctype": "Sales Order",
+                    "price_list": frm.doc.custom_price_list,
+                    "company": frappe.defaults.get_default("Company"),
+                    "quotation_to": "Customer",
+                    "transaction_date":frappe.datetime.get_today(),
+                    "conversion_rate": 1,
+                    "qty": 1,
+                    "uom": "Nos",
+                    "plc_conversion_rate": 1,
+                    "order_type": "Sales",
+                    "ignore_pricing_rule": 0
                 },
-                fieldname: 'price_list_rate'
-            },
+                item :row.item_code
+				 
+		
+			},
+          
             callback: function(res) {
-                const rate = res?.message?.price_list_rate;
-
+                
+                const rate = res?.message;
+                
                 if (rate) {
                     frappe.model.set_value(cdt, cdn, 'rate', rate);
-                } else {
+                }
+                else 
+                {
                     frappe.show_alert({
                         message: __(`No price found for {0} in {1}`, [row.item_code, price_list]),
                         indicator: 'orange'
                     });
-                    frappe.model.set_value(cdt, cdn, 'rate', 0);
                 }
             }
         });
+        // const row = locals[cdt][cdn];
+        // const price_list = frm.doc.custom_price_list;
+
+        // if (!row?.item_code || !price_list) return;
+
+        // frappe.call({
+        //     method: 'frappe.client.get_value',
+        //     args: {
+        //         doctype: 'Item Price',
+        //         filters: {
+        //             item_code: row.item_code,
+        //             price_list: price_list
+        //         },
+        //         fieldname: 'price_list_rate'
+        //     },
+        //     callback: function(res) {
+        //         const rate = res?.message?.price_list_rate;
+
+        //         if (rate) {
+        //             frappe.model.set_value(cdt, cdn, 'rate', rate);
+        //         } else {
+        //             frappe.show_alert({
+        //                 message: __(`No price found for {0} in {1}`, [row.item_code, price_list]),
+        //                 indicator: 'orange'
+        //             });
+        //             frappe.model.set_value(cdt, cdn, 'rate', 0);
+        //         }
+        //     }
+        // });
 
     } catch (err) {
         console.error("Error in get_item_rate:", err);

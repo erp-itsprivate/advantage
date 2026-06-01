@@ -5,7 +5,8 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from erpnext.selling.doctype.quotation.quotation import create_customer_from_lead,handle_mandatory_error
 from erpnext.crm.doctype.lead.lead import _make_customer 
-
+from frappe.utils import nowdate
+from erpnext.stock.get_item_details import get_price_list_rate_for
 
 def update_cdrs_data(lead):
     lead_doc=frappe.get_doc('Lead',lead)
@@ -17,6 +18,14 @@ def update_cdrs_data(lead):
             for a in frappe.get_all("PBX CDRs",filters=[['related_doctype_id','!=',lead_doc.name]],or_filters=[[ "call_to_number","=", lead_doc.phone_ext ],[ "call_to_number","=", lead_doc.phone],[ "call_to_number","=", lead_doc.whatsapp_no],[  "call_to_number","=",lead_doc.mobile_no],["call_to_number","=",lead_doc.custom_additional_mobile],[  "call_to_number","=", lead_doc.custom_additional_phone]],pluck='name') :
                 cdr=frappe.get_doc("PBX CDRs",a)
                 cdr.db_set('related_doctype_id',lead_doc.name,False,False,True)                   
+
+@frappe.whitelist()
+def get_rate(args,item):
+    args = frappe._dict(frappe.parse_json(args))
+    item_doc = frappe.get_doc("Item", item)   
+    rate = get_price_list_rate_for(args, item_doc.name)
+    return rate
+
 
 def advantage_make_customer(source_name, ignore_permissions=False):
    
