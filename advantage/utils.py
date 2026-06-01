@@ -19,7 +19,7 @@ def update_cdrs_data(lead):
                 cdr.db_set('related_doctype_id',lead_doc.name,False,False,True)                   
 
 def advantage_make_customer(source_name, ignore_permissions=False):
-    frappe.log_error(f"Customer Create from Quotation: {source_name}", "Cutomer Creation")
+   
     quotation = frappe.db.get_value(
                 "Quotation",
                 source_name,
@@ -38,7 +38,7 @@ def advantage_make_customer(source_name, ignore_permissions=False):
     if quotation.quotation_to == "Lead":
         return  advantage_create_customer_from_lead(quotation.party_name,quotation.opportunity, ignore_permissions=ignore_permissions)
     elif quotation.quotation_to == "Prospect":
-       return   advantage_make_customer_prospect(quotation.party_name)
+       return   create_customer_from_prospect(quotation.party_name,quotation.opportunity)
         
      
     return None
@@ -54,8 +54,21 @@ def advantage_create_customer_from_lead(lead_name, opportunity,ignore_permission
     except frappe.MandatoryError as e:
         handle_mandatory_error(e, customer, lead_name)
 
+def create_customer_from_prospect(prospect_name, opportunity,ignore_permissions=False):
+	 
+     
+    customer = advantage_make_customer_prospect(prospect_name,opportunity)
+    customer.flags.ignore_permissions = ignore_permissions
+   
+    try:
+        customer.insert()
+        return customer
+    except frappe.MandatoryError as e:
+        handle_mandatory_error(e, customer, prospect_name)
+
+
 @frappe.whitelist()
-def advantage_make_customer_prospect(source_name: str, target_doc: str | Document | None = None):
+def advantage_make_customer_prospect(source_name: str,opportunity, target_doc: str | Document | None = None):
     
     def set_missing_values(source, target):
         target.customer_type = "Company"
@@ -74,6 +87,7 @@ def advantage_make_customer_prospect(source_name: str, target_doc: str | Documen
                 set_missing_values,
                 ignore_permissions=False,
         )
+    doclist.opportunity_name=opportunity
     return doclist
 
 def todo_event_additional_data(doc):
@@ -314,7 +328,12 @@ def get_detailed_connections(lead_name):
             filters={"party_name": lead_name, "opportunity_from": "Lead"},
             pluck='name'
         )
-
+        if frappe.get_doc('Lead',lead_name).status=="Converted":
+            cust=frappe.get_doc("Customer",{"lead_name": lead_name})
+            connections['opportunities'].extend(frappe.db.get_list("Opportunity", 
+            filters={"party_name": cust.name, "opportunity_from": "Customer"},
+            pluck='name'
+        ))
     # 2. Get Quotations
     if frappe.has_permission('Quotation', "read"):
         connections['quotations'] = frappe.db.get_list("Quotation", 

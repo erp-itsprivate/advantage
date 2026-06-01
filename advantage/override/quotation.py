@@ -12,8 +12,10 @@ class AdvantageQuotation(Quotation):
     def validate(self):
         super().validate()
         if not self.opportunity :
-            frappe.throw(frappe._("You can't Create without opportunity"))
+            frappe.throw(frappe._("You can't create a quotation  without opportunity"))
         else:
             opportunity=frappe.get_doc('Opportunity',self.opportunity)
             if opportunity.opportunity_owner != frappe.session.user:
-                frappe.throw(frappe._("You can't Create if you are not opportunity owner"))
+                frappe.throw(frappe._("You can't create a quotation if you are not the opportunity owner"))
+            if self.selling_price_list != opportunity.custom_price_list :
+                frappe.throw(frappe._("You can't create quotation with different price list"))

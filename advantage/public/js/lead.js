@@ -15,6 +15,7 @@ function init(frm) {
 
 frappe.ui.form.on("Lead", {
     onload_post_render(frm) {
+        
         const original_add_button = frm.add_custom_button;
         frm.add_custom_button = function() {
             
@@ -53,10 +54,13 @@ frappe.ui.form.on("Lead", {
         
     },
 	setup: function(frm) {
+        
+        
         init(frm);
     },
     refresh(frm) {
 		init(frm);
+          
         frm.remove_custom_button('Quotation','Create'); 
         
         frm.remove_custom_button('Customer','Create'); 
@@ -78,4 +82,5 @@ frappe.ui.form.on("Lead", {
 			} 
 		}
 	}
+    
 });

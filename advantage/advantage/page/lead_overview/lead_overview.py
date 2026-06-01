@@ -4,6 +4,7 @@ import frappe
 import re,json
 from frappe.cache_manager import clear_controller_cache, clear_user_cache
 from advantage.utils import get_detailed_connections,get_lead_phone_numbers,format_datetime,show_how_old
+from datetime import date, time, datetime
 
 
 #if TYPE_CHECKING:
@@ -80,7 +81,8 @@ def make_opportunity(source_name, target_doc=None):
     connections=get_detailed_connections(source_name)
     if len(connections.get('customer')) > 0 :
         customer=frappe.get_doc('Customer',connections.get('customer')[0])
-        target_doc.update({"opportunity_from":"Customer","contact_display":customer.customer_name})
+        target_doc.update({"opportunity_from":"Customer","contact_display":customer.customer_name,"party_name":connections.get('customer')[0]})
+       
     return target_doc
 
 def get_critical_notes(lead):
@@ -100,7 +102,13 @@ def get_critical_notes(lead):
 
 def get_opportunities(lead,limit):
     if frappe.has_permission('Opportunity', "read"):
-        return frappe.get_all('Opportunity', filters=[['party_name','=',lead]],fields=['creation','probability','opportunity_type','name','status','opportunity_owner'],order_by='creation DESC',limit=limit)
+        connections=get_detailed_connections(lead)       
+        if len(connections.get('customer')) == 0 :
+            return frappe.get_all('Opportunity', filters=[['party_name','=',lead]],fields=['creation','probability','opportunity_type','name','status','opportunity_owner'],order_by='creation DESC',limit=limit)
+        else:
+            my_list= connections.get('customer')
+            my_list.append(lead)
+            return frappe.get_all('Opportunity', filters=[['party_name','in',my_list]],fields=['creation','probability','opportunity_type','name','status','opportunity_owner'],order_by='creation DESC',limit=limit)
 
 @frappe.whitelist()
 def render_products(lead):
@@ -239,6 +247,7 @@ def get_products(lead,fields,limit):
         products.append(data)
         if len(connections.get('opportunities')) > 0 :
                 pre_data=frappe.get_all('Opportunity Item', filters=[["parenttype",'=','Opportunity'],['parent','in',connections.get('opportunities')]],pluck='name',limit=limit)
+                
                 pre_fields=['item_name','creation','parent','item_code']
             
                 meta = frappe.get_meta("Opportunity Item")
@@ -254,14 +263,15 @@ def get_products(lead,fields,limit):
                     item['subject'] = 'Interested In'
                     if is_customer ==True :
                         values = {  'opp':item.parent,'item_code': item.item_code}
-                        count =frappe.db.sql("""  select count(*) from `tabSales Order Item`  where parent in (
+                        count =frappe.db.sql("""  select * from `tabSales Order Item`  where parent in (
                             select name from `tabSales Order` where customer in (
                             select name from `tabCustomer` where opportunity_name=%(opp)s )) 
                             and item_code=%(item_code)s """,values=values
-                            
-                            )[0][0]
-                        if count == 1:
+                            ,as_dict=1
+                            )
+                        if len(count) > 0:
                             item['subject'] = 'Sold by company'
+                            item['creation']=datetime.combine(count[0].delivery_date, time(0, 0, 0)) 
                     item['link']="opportunity/"+item.pop('parent')
     
 

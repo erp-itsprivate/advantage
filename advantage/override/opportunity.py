@@ -105,6 +105,8 @@ class AdvantageOpportunity(Opportunity):
             new_item.user = frappe.session.user
             new_item.action_date = action_date
             new_item.state = self.custom_opportunity_cycle
+
+            self.custom_last_action_date=action_date
     
         # 1) Ensure opportunity_owner is set
         if not self.opportunity_owner:
