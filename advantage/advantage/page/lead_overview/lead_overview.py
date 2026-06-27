@@ -241,7 +241,7 @@ def get_products(lead,fields,limit):
         data=frappe.get_all('Advantage Products', filters=[['name','in',pre_data]],fields=all_fields)
         for item in data: 
             item['subject'] = 'Owns'
-            item['item'] =item.pop('product_name')
+            item['item_name'] =item.pop('product_name')
             item['creation'] =item.pop('buy_date')
             item['link']="lead/"+lead
         products.append(data)
@@ -259,16 +259,17 @@ def get_products(lead,fields,limit):
                 if  frappe.get_doc('Lead',lead).status == "Converted":
                     is_customer=True
                 for item in data: 
-                    item['item'] =item.pop('item_name')                    
+                    item['item'] =item.pop('item_code')                    
                     item['subject'] = 'Interested In'
                     if is_customer ==True :
-                        values = {  'opp':item.parent,'item_code': item.item_code}
+                        values = {  'opp':frappe.get_doc("Customer",{"lead_name": lead}).name,'item_code': item.item}
+                        
                         count =frappe.db.sql("""  select * from `tabSales Order Item`  where parent in (
-                            select name from `tabSales Order` where customer in (
-                            select name from `tabCustomer` where opportunity_name=%(opp)s )) 
+                            select name from `tabSales Order` where customer  =%(opp)s ) 
                             and item_code=%(item_code)s """,values=values
                             ,as_dict=1
                             )
+                         
                         if len(count) > 0:
                             item['subject'] = 'Sold by company'
                             item['creation']=datetime.combine(count[0].delivery_date, time(0, 0, 0)) 
@@ -325,7 +326,10 @@ def get_notes(lead,fields,limit):
     try:
         connections=get_detailed_connections(lead)
         notes=[]
-        pre_data=frappe.get_all('CRM Note', filters=[['parent','=',lead],["parenttype","=","Lead"]],pluck='name',limit=limit,order_by="added_on DESC")     
+        pre_data=frappe.get_all('CRM Note', filters=[['parent','=',lead],["parenttype","=","Lead"]],pluck='name',limit=limit,order_by="added_on DESC") 
+        if len(connections.get('opportunities')) > 0 :
+            pre_data_opp=frappe.get_all('CRM Note', filters=[['parent','in',connections.get('opportunities')],["parenttype","=","Opportunity"]],pluck='name',limit=limit,order_by="added_on DESC") 
+            pre_data.extend(pre_data_opp)
         notes.append(frappe.get_all('CRM Note', filters=[['name','in',pre_data]],fields=fields))
         #if len(connections.get('opportunities')) > 0 :
         #    pre_data=frappe.get_all('CRM Note', filters=[['parent','in',connections.get('opportunities')],["parenttype","=","Opportunity"]],pluck='name',limit=limit)   

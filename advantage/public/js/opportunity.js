@@ -156,7 +156,12 @@ frappe.ui.form.on("Opportunity", {
             
         );
         advantage.utils.set_leaf_filter(frm, "territory");
-        console.log(frm.doc.opportunity_type);
+         
+        if (frm.doc.opportunity_type != undefined && frm.doc.opportunity_type != '')
+        {
+            frm.set_df_property("opportunity_type", "read_only", 1);
+              
+        }
         if (frm.doc.opportunity_type == undefined || frm.doc.opportunity_type == "") 
          {frm.doc.opportunity_type = "Sales";}
         console.log(frm.doc.custom_need_test_drive);

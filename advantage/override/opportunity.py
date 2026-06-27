@@ -24,7 +24,7 @@ class AdvantageOpportunity(Opportunity):
     def validate(self):
         
         super().validate()
-     
+
         same_opportunities=frappe.get_all('Opportunity',filters=[['name','!=',self.name],['opportunity_from','=',self.opportunity_from],['party_name','=',self.party_name],['opportunity_type','=',self.opportunity_type],['custom_opportunity_cycle','not in',['Lost','Converted','Handed Over','Closed']]],fields=['name'])
       
         if (len(same_opportunities) > 0):
@@ -145,6 +145,10 @@ class AdvantageOpportunity(Opportunity):
                     break
         #frappe.msgprint(self.custom_domain)
         #print(self.custom_domain)
+        if self.opportunity_from == 'Prospect':
+            self.title=frappe.get_doc('Prospect',self.party_name).company_name
+        if self.opportunity_from == 'Customer':
+             self.title=frappe.get_doc('Customer',self.party_name).customer_name
         frappe.db.commit()
         logger.info(f" file => advantage opportunity.py on_update opportunity {self.name} custom_user_group {self.custom_user_group}  custom_domain {self.custom_domain}  ")
     

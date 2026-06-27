@@ -183,6 +183,7 @@ def get_user_same_company(doctype: str, txt: str, searchfield: str, start: int, 
             where  name in %(users)s and   tabUser.name LIKE %(txt)s""",values=values)
 
 def email_queue(doc, method=None):
+
     import ast
     allowed_domains=[]
     setting = frappe.get_single('Advantage Settings')
