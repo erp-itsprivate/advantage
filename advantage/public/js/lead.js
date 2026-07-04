@@ -232,6 +232,79 @@ frappe.ui.form.on("Lead", {
     			);
             }, 50);
         }
+        frappe.call({
+            method: "advantage.override.lead.get_cdr_html",
+            args: {
+                lead: frm.doc.name,     // ID of current document
+              
+            },
+            callback: function(r) {
+                if(r.message) {
+                    // Set the HTML inside your HTML field (e.g., named 'cdr_display_field')
+                    $(frm.fields_dict.custom_calls_log.wrapper).html(r.message);
+                }
+            }
+        });
+        if (frappe.user.has_role('CRM Manager') && !frm.is_new())  {
+            frm.add_custom_button(__('Move CDRs'), function() {
+                
+                // 2. Create the Dialog
+                let dialog = new frappe.ui.Dialog({
+                    title: __('Select Target Lead'),
+                    fields: [
+                        {
+                            label: __('Target Lead'),
+                            fieldname: 'selected_lead',
+                            fieldtype: 'Link',
+                            options: 'Lead', // <--- Change this to the DocType you want to link to!
+                            reqd: 1,          // Makes the field mandatory
+                            description: __('Please select the record to process.')
+                        }
+                    ],
+                    size: 'small', // Can be 'small', 'large', or 'extra-large'
+                    primary_action_label: __('Submit Process'),
+                    
+                    // 3. This triggers when the user clicks "Submit Process" in the dialog
+                    primary_action(values) {
+                        console.log(values);
+                        // Extract the selected value from the dialog
+                        let selected_record = values.selected_lead;
+                          
+                        // 4. Call the backend Python script
+                       frappe.call({
+                            // REPLACE THIS PATH WITH YOUR ACTUAL PYTHON SCRIPT PATH
+                            method: "advantage.override.lead.change_cdrs",
+                            args: {
+                                source_lead: frm.doc.name,     // ID of current document
+                                target_lead: selected_record  // ID selected in the dialog
+                            },
+                            freeze: true,
+                            freeze_message: __('Processing...'),
+                            callback: function(response) {
+                                if (!response.exc) { // If there are no Python errors
+                                    // Close the dialog
+                                    dialog.hide();
+                                    
+                                    // Show success alert
+                                    frappe.show_alert({
+                                        message: __('Successfully processed ' + selected_record),
+                                        indicator: 'green'
+                                    });
+                                    
+                                    // Reload form to show any backend changes
+                                    frm.reload_doc();
+                                }
+                            }
+                        }); 
+                    }
+                });
+                
+                // Show the dialog to the user
+                dialog.show();
+                
+            });
+        }
+
 	}
     
 });

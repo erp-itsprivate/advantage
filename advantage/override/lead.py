@@ -123,10 +123,59 @@ class AdvantageLead(Lead):
                 frappe.log_error(message= f" file => advantagelead.py on_update self {self}  {frappe.get_traceback()} ", title="Advantage")  
 
         else:
-             frappe.throw(_("Company field is mandatory"))
+             frappe.throw(_("Company field is mandatory" ))
         
                 
                 
 
 
+@frappe.whitelist()
+def change_cdrs(source_lead,target_lead):
+    frappe.db.sql("""
+        update `tabPBX CDRs` set related_doctype_id=%(trg_lead)s   where related_doctype_id=%(src_lead)s   
+                  """,{
+        "src_lead": source_lead,
+        "trg_lead": target_lead
+    })
+    frappe.db.commit()
 
+ 
+@frappe.whitelist()
+def get_cdr_html(lead):
+    # 1. Fetch raw data, strictly sorted by time descending
+    raw_cdrs = frappe.db.sql("""
+        SELECT 
+            call_id, call_type, call_from_number, duration, 
+            disposition, call_to_number, call_to_name, cdr_time
+        FROM `tabPBX CDRs`
+         where related_doctype_id=%(lead)s  
+         ORDER BY STR_TO_DATE(cdr_time, '%%d/%%m/%%Y %%H:%%i:%%s') DESC
+    """,{
+        "lead": lead} ,as_dict=True)
+
+    # 2. Group the data manually while preserving the time-based sorting
+    grouped_cdrs = []
+    processed_ids = set()
+
+    for cdr in raw_cdrs:
+        cid = cdr.call_id
+        if cid not in processed_ids:
+            processed_ids.add(cid)
+            
+            # Find all call legs for this specific Call ID
+            calls_in_group = [c for c in raw_cdrs if c.call_id == cid]
+            
+            # Append as a grouped dictionary
+            grouped_cdrs.append({
+                "call_id": cid,
+                "latest_time": cdr.cdr_time, # The first one is the newest due to DESC SQL sort
+                "calls": calls_in_group
+            })
+
+    # 3. Render the HTML template (Assuming the HTML above is saved in a file or field)
+    html_output = frappe.render_template(
+        "advantage/templates/includes/lead_cdrs.html", 
+        {"grouped_cdrs": grouped_cdrs}
+    )
+    
+    return html_output
