@@ -145,7 +145,7 @@ def get_cdr_html(lead):
     # 1. Fetch raw data, strictly sorted by time descending
     raw_cdrs = frappe.db.sql("""
         SELECT 
-            call_id, call_type, call_from_number, duration, 
+            call_id, call_type, call_from_number,call_from_name, duration, 
             disposition, call_to_number, call_to_name, cdr_time
         FROM `tabPBX CDRs`
          where related_doctype_id=%(lead)s  

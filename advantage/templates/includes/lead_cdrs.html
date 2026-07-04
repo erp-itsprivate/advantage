@@ -6,8 +6,6 @@
         background-color: #ffffff;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
-    /* The summary tag acts as our clickable header */
     .cdr-header {
         background-color: #f7fafc;
         padding: 10px 15px;
@@ -16,35 +14,27 @@
         justify-content: space-between;
         align-items: center;
         cursor: pointer;
-        list-style: none; /* Hides the default browser arrow */
+        list-style: none; 
         outline: none;
     }
-    
-    /* Hides the default browser arrow in Safari/Chrome */
     .cdr-header::-webkit-details-marker {
         display: none;
     }
-
-    /* When the details tag is open, change the border of the header */
     details[open] > .cdr-header {
         border-bottom: 1px solid #d1d8dd;
         border-radius: 8px 8px 0 0;
     }
-
     .cdr-header-title {
         font-weight: 600;
         color: #1c2126;
         font-size: 14px;
     }
-    
     .cdr-time {
         font-size: 12px;
         color: #8d99a6;
         display: flex;
         align-items: center;
     }
-
-    /* Animate our custom dropdown arrow */
     .cdr-toggle-icon {
         margin-left: 10px;
         transition: transform 0.2s ease-in-out;
@@ -52,7 +42,6 @@
     details[open] .cdr-toggle-icon {
         transform: rotate(180deg);
     }
-
     .cdr-body {
         padding: 15px;
     }
@@ -74,25 +63,19 @@
 </style>
 
 <div class="cdr-container">
-    <!-- Loop through the grouped CDRs -->
     {% for group in grouped_cdrs %}
-    
-    <!-- Use details tag. The loop.first makes only the first record open by default -->
     <details class="cdr-card" {% if loop.first %}open{% endif %}>
         
-        <!-- Summary replaces the old div header and makes it clickable -->
         <summary class="cdr-header">
             <div class="cdr-header-title">
                 <i class="fa fa-phone fa-fw text-muted"></i> Call ID: {{ group.call_id }}
             </div>
             <div class="cdr-time">
                 <i class="fa fa-clock-o fa-fw"></i> {{ group.latest_time }}
-                <!-- Custom Arrow Icon -->
                 <i class="fa fa-chevron-down fa-fw text-dark cdr-toggle-icon"></i>
             </div>
         </summary>
 
-        <!-- Body: Loop through individual legs of the call -->
         <div class="cdr-body">
             {% for row in group.calls %}
             <div class="row align-items-center {% if not loop.last %}border-bottom mb-3 pb-2{% endif %}">
@@ -108,14 +91,20 @@
                     </div>
                 </div>
 
+                <!-- UPDATED: FROM NUMBER / NAME -->
                 <div class="col-sm-6 col-md-3">
-                    <div class="cdr-label">From Number</div>
-                    <div class="cdr-value">{{ row.call_from_number }}</div>
+                    <div class="cdr-label">From Num {% if row.call_type == 'Outbound' and row.call_from_name %}/ Name{% endif %}</div>
+                    <div class="cdr-value">
+                        {{ row.call_from_number }}
+                        {% if row.call_type == 'Outbound' and row.call_from_name %}
+                            <span class="text-muted">({{ row.call_from_name }})</span>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="col-sm-6 col-md-3">
                     <div class="cdr-label">To Num / Name</div>
-                    <div class="cdr-value">{{ row.call_to_number }} <span class="text-muted">({{ row.call_to_name }})</span></div>
+                    <div class="cdr-value">{{ row.call_to_number }} <span class="text-muted">{% if row.call_to_name %}({{ row.call_to_name }}){% endif %}</span></div>
                 </div>
 
                 <div class="col-sm-6 col-md-3">
