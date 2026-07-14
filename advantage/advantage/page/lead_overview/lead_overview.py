@@ -355,32 +355,62 @@ def save_lead(lead):
         if data.get("lead_id") != "NA":
         
         
+            lead_id= data.get("lead_id")
             
             
-            
-            updates= {
-                "market_segment" : data.get("market_segment")  ,
-            "gender": data.get("gender"),
-            "first_name": data.get("first_name"),
-            "last_name":data.get("last_name"),
-            "company":data.get("company") ,
-            "job_title":data.get("job_title"),
-            "company_name": data.get("organization"),
-            "mobile_no" : data.get("mobile_no"),
-            "whatsapp_no" : data.get("whatsapp"),
-            "phone": data.get("phone_no"),
-            "email_id": data.get("email"),
-            "industry":data.get("industry"),
-            "territory":data.get("territory"),
-            "custom_birth_date":data.get("birth_date"),
+            # updates= {
+            #     "market_segment" : data.get("market_segment")  ,
+            # "gender": data.get("gender"),
+            # "first_name": data.get("first_name"),
+            # "last_name":data.get("last_name"),
+            # "company":data.get("company") ,
+            # "job_title":data.get("job_title"),
+            # "company_name": data.get("organization"),
+            # "mobile_no" : data.get("mobile_no"),
+            # "whatsapp_no" : data.get("whatsapp"),
+            # "phone": data.get("phone_no"),
+            # "email_id": data.get("email"),
+            # "industry":data.get("industry"),
+            # "territory":data.get("territory"),
+            # "custom_birth_date":data.get("birth_date"),
             
 
 
-            }
-            if data.get("source") is not None and data.get("source") != "":
-                updates.update({"source": data.get("source")})
-            frappe.db.set_value("Lead", data.get("lead_id"), updates)
-            return data.get("lead_id")
+            # }
+            # if data.get("source") is not None and data.get("source") != "":
+            #     updates.update({"source": data.get("source")})
+            # frappe.db.set_value("Lead", data.get("lead_id"), updates)
+            # return data.get("lead_id")
+            lead_doc = frappe.get_doc("Lead", lead_id)
+            
+            # 2. Update the document's dictionary with your mapping
+            lead_doc.update({
+                "market_segment": data.get("market_segment"),
+                "gender": data.get("gender"),
+                "first_name": data.get("first_name"),
+                "last_name": data.get("last_name"),
+                "company": data.get("company"),
+                "job_title": data.get("job_title"),
+                "company_name": data.get("organization"),
+                "mobile_no": data.get("mobile_no"),
+                "whatsapp_no": data.get("whatsapp"),
+                "phone": data.get("phone_no"),
+                "email_id": data.get("email"),
+                "industry": data.get("industry"),
+                "territory": data.get("territory"),
+                "custom_birth_date": data.get("birth_date"),
+            })
+            
+            # 3. Add source conditionally (simplified condition)
+            if data.get("source"):
+                lead_doc.source = data.get("source")
+                
+            # 4. Save the document (This triggers validate, on_update, etc.)
+            # ignore_permissions=True can be added if the current session user lacks explicit write access
+            lead_doc.save()
+            frappe.db.commit()
+    
+            return  data.get("lead_id")
         else:
             if data.get("source") is not None and data.get("source") != "":
                 doc = frappe.get_doc({

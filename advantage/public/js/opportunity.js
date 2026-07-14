@@ -195,8 +195,9 @@ frappe.ui.form.on("Opportunity", {
         console.log(frm.doc.opportunity_type);
 
         advantage.utils.set_leaf_filter(frm, "territory");
-        if (frm.doc.opportunity_type == undefined || frm.doc.opportunity_type == "") 
-         {frm.doc.opportunity_type = "Sales"; }
+       if (frm.is_new() && (!frm.doc.opportunity_type)) {
+            frm.set_value("opportunity_type", "Sales");
+        }
        
         //toggle_read_only(frm);
         frm.set_df_property('items', 'cannot_add_rows', false);
